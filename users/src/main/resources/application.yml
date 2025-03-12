@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: users
+  main:
+    web-application-type: reactive
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: 222513227035-o4di6u2kn336mnknn863nmikvrl8cgsh.apps.googleusercontent.com
+            clientSecret: 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
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/PFE
+server:
+  port: 8090
+jwt:
+  secret: "your-256-bit-secret-key-must-be-at-least-32-characters-long"
+  expiration: 86400000
+
