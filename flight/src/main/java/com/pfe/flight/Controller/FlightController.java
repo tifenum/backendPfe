@@ -1,42 +1,28 @@
 package com.pfe.flight.Controller;
 
-import com.pfe.flight.service.AmadeusService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+import com.pfe.flight.service.FlightService;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/flights")
+@RequestMapping("/api/flights")
 public class FlightController {
 
-    @Autowired
-    private AmadeusService AmadeusService;
+    private final FlightService flightService;
+
+    public FlightController(FlightService flightService) {
+        this.flightService = flightService;
+    }
 
     @GetMapping("/search")
-    public Mono<ResponseEntity<String>> searchFlights(
+    public Mono<List<Map<String, Object>>> searchFlights(
             @RequestParam String origin,
             @RequestParam String destination,
             @RequestParam String departureDate,
             @RequestParam int adults) {
-
-        // Step 1: Get Amadeus Access Token
-        return AmadeusService.getAccessToken()
-                .flatMap(amadeusToken -> {
-                    // Step 2: Prepare query parameters for Amadeus API
-                    Map<String, String> queryParams = new HashMap<>();
-                    queryParams.put("originLocationCode", origin);
-                    queryParams.put("destinationLocationCode", destination);
-                    queryParams.put("departureDate", departureDate);
-                    queryParams.put("adults", String.valueOf(adults));
-
-                    // Step 3: Call Amadeus API
-                    return AmadeusService.searchFlights(amadeusToken, queryParams)
-                            .map(ResponseEntity::ok);
-                })
-                .onErrorResume(e -> Mono.just(ResponseEntity.badRequest().body("Error: " + e.getMessage())));
+        return flightService.searchFlights(origin, destination, departureDate, adults);
     }
 }

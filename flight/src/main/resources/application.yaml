@@ -11,3 +11,12 @@ amadeus:
   api:
     key: t52s39mJ2t8lj7MkNrJ1xaemdQQSAO3O
     secret: GbbYQOlrnp3LXd1l
+
+logging:
+  level:
+    com:
+      pfe:
+        flight:
+          Controller: DEBUG
+    org:
+      springframework: DEBUG

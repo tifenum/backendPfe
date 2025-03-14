@@ -9,8 +9,14 @@ spring:
         - id: users
           uri: http://localhost:8090
           predicates:
-            - Path=/**
+            - Path=/users/**
         - id: flight
           uri: http://localhost:8050
           predicates:
-            - Path=/**
+            - Path=/api/flights/**
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.security: DEBUG
+    reactor.netty.http.client: DEBUG
+
