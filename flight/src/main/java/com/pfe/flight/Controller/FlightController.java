@@ -1,8 +1,7 @@
-package com.pfe.Controller;
+package com.pfe.flight.Controller;
 
-import com.pfe.service.AmadeusService;
+import com.pfe.flight.service.AmadeusService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
@@ -15,31 +14,27 @@ import java.util.Map;
 public class FlightController {
 
     @Autowired
-    private AmadeusService amadeusService;
+    private AmadeusService AmadeusService;
 
     @GetMapping("/search")
     public Mono<ResponseEntity<String>> searchFlights(
-            @RequestHeader(HttpHeaders.AUTHORIZATION) String token,
             @RequestParam String origin,
             @RequestParam String destination,
             @RequestParam String departureDate,
             @RequestParam int adults) {
 
-        // Step 1: Validate JWT token (if needed)
-        // You can reuse your existing JWT validation logic here.
-
-        // Step 2: Get Amadeus Access Token
-        return amadeusService.getAccessToken()
-                .flatMap(accessToken -> {
-                    // Step 3: Prepare query parameters for Amadeus API
+        // Step 1: Get Amadeus Access Token
+        return AmadeusService.getAccessToken()
+                .flatMap(amadeusToken -> {
+                    // Step 2: Prepare query parameters for Amadeus API
                     Map<String, String> queryParams = new HashMap<>();
                     queryParams.put("originLocationCode", origin);
                     queryParams.put("destinationLocationCode", destination);
                     queryParams.put("departureDate", departureDate);
                     queryParams.put("adults", String.valueOf(adults));
 
-                    // Step 4: Call Amadeus API
-                    return amadeusService.searchFlights(accessToken, queryParams)
+                    // Step 3: Call Amadeus API
+                    return AmadeusService.searchFlights(amadeusToken, queryParams)
                             .map(ResponseEntity::ok);
                 })
                 .onErrorResume(e -> Mono.just(ResponseEntity.badRequest().body("Error: " + e.getMessage())));

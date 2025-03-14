@@ -1,4 +1,4 @@
-package com.pfe.service;
+package com.pfe.flight.service;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -26,11 +26,13 @@ public class AmadeusService {
     }
 
     public Mono<String> getAccessToken() {
+        // Step 1: Prepare the request body for Amadeus Authentication API
         Map<String, String> requestBody = new HashMap<>();
         requestBody.put("grant_type", "client_credentials");
         requestBody.put("client_id", apiKey);
         requestBody.put("client_secret", apiSecret);
 
+        // Step 2: Call Amadeus Authentication API
         return webClient.post()
                 .uri("/v1/security/oauth2/token")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
@@ -39,7 +41,8 @@ public class AmadeusService {
                 .bodyToMono(String.class);
     }
 
-    public Mono<String> searchFlights(String accessToken, Map<String, String> queryParams) {
+    public Mono<String> searchFlights(String amadeusToken, Map<String, String> queryParams) {
+        // Step 3: Call Amadeus Flight Offers API
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/v2/shopping/flight-offers")
@@ -48,7 +51,7 @@ public class AmadeusService {
                         .queryParam("departureDate", queryParams.get("departureDate"))
                         .queryParam("adults", queryParams.get("adults"))
                         .build())
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + amadeusToken)
                 .retrieve()
                 .bodyToMono(String.class);
     }
