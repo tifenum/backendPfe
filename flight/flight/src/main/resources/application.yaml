@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: flight
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/flightdb
+server:
+  port: 8050
+
+amadeus:
+  api:
+    key: t52s39mJ2t8lj7MkNrJ1xaemdQQSAO3O
+    secret: GbbYQOlrnp3LXd1l

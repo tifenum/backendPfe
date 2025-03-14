@@ -14,17 +14,18 @@ public class UserService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
-
-    public Mono<Object> registerUser(User user) {
-        return userRepository.findByEmail(user.getEmail()) // Check if email exists
-                .flatMap(existingUser -> Mono.error(new RuntimeException("Email already in use")))
-                .switchIfEmpty(
-                        Mono.defer(() -> {
-                            user.setPassword(passwordEncoder.encode(user.getPassword()));
-                            return userRepository.save(user);
-                        })
-                );
+    public Mono<User> registerUser(User user) {
+        return userRepository.findByEmail(user.getEmail())
+                .flatMap(existingUser ->
+                        // Explicitly type the error to match Mono<User>
+                        Mono.<User>error(new RuntimeException("Email already in use"))
+                )
+                .switchIfEmpty(Mono.defer(() -> {
+                    user.setPassword(passwordEncoder.encode(user.getPassword()));
+                    return userRepository.save(user);
+                }));
     }
+
     public Mono<User> findByEmail(String email) {
         return userRepository.findByEmail(email);
     }

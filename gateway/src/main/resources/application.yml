@@ -10,7 +10,7 @@ spring:
           uri: http://localhost:8090
           predicates:
             - Path=/**
-        - id: hotels
-          uri: http://localhost:8090
+        - id: flight
+          uri: http://localhost:8050
           predicates:
             - Path=/**
