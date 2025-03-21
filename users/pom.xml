@@ -36,6 +36,54 @@
 			<artifactId>spring-boot-starter-actuator</artifactId>
 		</dependency>
 
+
+		<!-- Spring Boot OAuth2 Client -->
+
+
+		<!-- Spring Boot WebFlux for reactive support -->
+
+
+		<!-- Keycloak Spring Boot Adapter for OAuth2 support -->
+		<dependency>
+			<groupId>org.keycloak</groupId>
+			<artifactId>keycloak-spring-boot-starter</artifactId>
+			<version>15.0.2</version> <!-- Ensure this is the correct version you need -->
+		</dependency>
+
+		<!-- Spring Security for handling authentication and authorization -->
+
+		<!-- Spring Security for WebFlux -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+
+		<!-- Spring Security OAuth2 Resource Server -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+		</dependency>
+
+		<!-- Spring Security OAuth2 Client -->
+
+
+		<!-- Jackson for JSON processing -->
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+		</dependency>
+
+		<!-- Spring Boot Starter for Reactive MongoDB (if you're using MongoDB for users) -->
+
+
+		<!-- Reactor Core (for reactive programming) -->
+
+
+
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-oauth2-client</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-config-server</artifactId>

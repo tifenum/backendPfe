@@ -7,17 +7,41 @@ spring:
     oauth2:
       client:
         registration:
+          keycloak:
+            client-id: spring-boot-client
+            client-secret: EfEBkyX2BW2Jf0RtTdGL3e6cxMiaDGpV
+            scope: openid, profile, email
+            authorization-grant-type: authorization_code
+            redirect-uri: http://localhost:8090/login/oauth2/code/keycloak
           google:
-            client-id: 222513227035-o4di6u2kn336mnknn863nmikvrl8cgsh.apps.googleusercontent.com
-            clientSecret: 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
+            client-id: 222513227035-8g18uspv7ptbdpjfjn7jplfmalle7hrm.apps.googleusercontent.com
+            clientSecret: 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
+        provider:
+          keycloak:
+            authorization-uri: http://localhost:8080/realms/bookingPlatform/protocol/openid-connect/auth
+            token-uri: http://localhost:8080/realms/bookingPlatform/protocol/openid-connect/token
+            user-info-uri: http://localhost:8080/realms/bookingPlatform/protocol/openid-connect/userinfo
+            jwk-set-uri: http://localhost:8080/realms/bookingPlatform/protocol/openid-connect/certs
+
   data:
     mongodb:
       uri: mongodb://localhost:27017/PFE
+
 server:
   port: 8090
-jwt:
-  secret: "your-256-bit-secret-key-must-be-at-least-32-characters-long"
-  expiration: 86400000
+
+keycloak:
+  server-url: http://localhost:8080
+  realm: bookingPlatform
+  public-client: true
+  bearer-only: true
+  client-id: spring-boot-client
+  client-secret: EfEBkyX2BW2Jf0RtTdGL3e6cxMiaDGpV
+  admin-token: eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJxelhVclR0WElCaDlmYWRKS2xkcGF0RDVHR3pkUjQ0LTY4c1VLaklPWE0wIn0.eyJleHAiOjE3NDI0Mzk3MzIsImlhdCI6MTc0MjQzNzkzMiwianRpIjoiN2FlMzdlNDUtZGJkMC00MzI2LWI5M2EtYTlkYTcwYWY5YWM4IiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4MDgwL3JlYWxtcy9tYXN0ZXIiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJhZG1pbi1jbGkiLCJzaWQiOiJjOWRmN2QwYy1hZjI2LTQ5MjktOWEyNy0zNDczYzZiYWRjZjYiLCJzY29wZSI6ImVtYWlsIHByb2ZpbGUifQ.uNGKwbEFclS3aN6dpysROE65tY5Nsc4AFDVhs4LaAyJtK8MlABPae1NCBjuxTEpEYTFSZ0VAEE9XNW4Rg98fgHpu937H3u5SsiwmbyRCrDtCVCLqVIEPzRJ7tYQXnmhAi44oiDH7cGJ6CLbktp7vlaf7wzqkYtbaVq9JQiCy4-BgzkOll2PBo-_NDW944ATLt7JDFCb9COTp8K1QLvDud3tqEfADVT-ycltIwxbUWYn-ILsck8e8Mo73il5q6O9SVIHZ6HSLZYTJTfOjcOV3_c_hjz6IvjV-N4X9joK8EVJI698YNil17D9yOsjEl4_UwbLA6wErr-aNevl_hJx0ig
+
 logging:
   level:
-    com.pfe.users.security.SecurityConfig: DEBUG
+    org:
+      springframework:
+        security: DEBUG
+        web: DEBUG
