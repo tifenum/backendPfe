@@ -14,6 +14,10 @@ spring:
           uri: http://localhost:8050
           predicates:
             - Path=/api/flights/**
+        - id: hotel
+          uri: http://localhost:8060
+          predicates:
+            - Path=/api/hotels/**
 logging:
   level:
     org.springframework.cloud.gateway: DEBUG

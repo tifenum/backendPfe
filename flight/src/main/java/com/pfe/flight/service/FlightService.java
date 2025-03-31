@@ -8,6 +8,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
+import com.pfe.flight.model.FlightBooking;
+import com.pfe.flight.reposetery.FlightBookingRepository;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
@@ -22,13 +24,18 @@ public class FlightService {
     private final Amadeus amadeus;
     private final ObjectMapper objectMapper;
     private final Gson gson;
+    private final FlightBookingRepository flightBookingRepository;
 
-    public FlightService(Amadeus amadeus, ObjectMapper objectMapper) {
+    public FlightService(Amadeus amadeus, ObjectMapper objectMapper, FlightBookingRepository flightBookingRepository) {
         this.amadeus = amadeus;
         this.objectMapper = objectMapper;
+        this.flightBookingRepository = flightBookingRepository;
         this.gson = new Gson();
     }
-
+    public Mono<FlightBooking> bookFlight(FlightBooking flightBooking) {
+        // Logic to save the booking
+        return flightBookingRepository.save(flightBooking);
+    }
     public Mono<List<Map<String, Object>>> searchFlights(String origin, String destination, String departureDate, int adults) {
         return Mono.fromCallable(() -> {
             try {
@@ -40,7 +47,6 @@ public class FlightService {
                         .and("adults", adults)
                         .and("max", 3));
 
-                // Convert each FlightOfferSearch to a Map for safe JSON serialization
                 return Arrays.stream(offers)
                         .map(offer -> {
                             // First, convert the offer to a JSON string using Gson
@@ -48,13 +54,10 @@ public class FlightService {
 
                             // Use Gson to parse the response manually
                             JsonElement jsonElement = gson.fromJson(json, JsonElement.class);
-                            // Handle the "response" field if necessary (ensure it's a JsonArray or JsonObject)
                             JsonElement responseElement = jsonElement.getAsJsonObject().get("response");
 
                             // Manually handle the issue where the data field might be an array of integers
                             if (responseElement != null && responseElement.isJsonArray()) {
-                                // Optionally, process the array to ensure the size or structure fits the expected format
-                                // For instance, you could take the first element if that's what is required
                                 JsonElement dataElement = responseElement.getAsJsonArray().get(0);  // Adjust based on the structure
                                 jsonElement.getAsJsonObject().add("response", dataElement);
                             }

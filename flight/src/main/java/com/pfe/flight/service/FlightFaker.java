@@ -64,7 +64,7 @@ public class FlightFaker {
 
         // Traveler Pricing
         flightOffer.put("travelerPricings", List.of(generateTravelerPricing(id)));
-
+        List<Map<String, Object>> seatMap = generateSeatMap();
         return flightOffer;
     }
 
@@ -126,10 +126,11 @@ public class FlightFaker {
                 )
         );
     }
-
     private Map<String, Object> generateTravelerPricing(int travelerId) {
+        List<Map<String, Object>> seatMap = generateSeatMap();
+
         return Map.of(
-                "travelerId", String.valueOf(travelerId),
+                "travelerId", travelerId,
                 "fareOption", "STANDARD",
                 "travelerType", "ADULT",
                 "price", generatePrice(),
@@ -137,48 +138,64 @@ public class FlightFaker {
                         Map.of(
                                 "segmentId", UUID.randomUUID().toString(),
                                 "cabin", "ECONOMY",
-                                "fareBasis", "TL10R0B",
-                                "brandedFare", "LIGHT",
-                                "brandedFareLabel", "ECONOMY LIGHT",
-                                "class", "T",
-                                "includedCheckedBags", Map.of("quantity", 0),
-                                "includedCabinBags", Map.of("weight", 8, "weightUnit", "KG"),
-                                "amenities", List.of(
-                                        Map.of(
-                                                "description", "CHECKED BAG 23KG 01PC 158CM",
-                                                "isChargeable", true,
-                                                "amenityType", "BAGGAGE",
-                                                "amenityProvider", Map.of("name", "BrandedFare")
-                                        ),
-                                        Map.of(
-                                                "description", "MEAL GRILL",
-                                                "isChargeable", false,
-                                                "amenityType", "MEAL",
-                                                "amenityProvider", Map.of("name", "BrandedFare")
-                                        ),
-                                        Map.of(
-                                                "description", "STANDARD SEAT RESERVATION",
-                                                "isChargeable", true,
-                                                "amenityType", "BRANDED_FARES",
-                                                "amenityProvider", Map.of("name", "BrandedFare")
-                                        ),
-                                        Map.of(
-                                                "description", "MILES ACCRUAL",
-                                                "isChargeable", false,
-                                                "amenityType", "BRANDED_FARES",
-                                                "amenityProvider", Map.of("name", "BrandedFare")
-                                        ),
-                                        Map.of(
-                                                "description", "CHANGEABLE TICKET",
-                                                "isChargeable", true,
-                                                "amenityType", "BRANDED_FARES",
-                                                "amenityProvider", Map.of("name", "BrandedFare")
-                                        )
-                                )
+                                "fareBasis", "Y",
+                                "brandedFare", "STANDARD",
+                                "class", "Y",
+                                "includedCheckedBags", Map.of("quantity", 1)
                         )
-                )
+                ),
+                "seatMap", seatMap
         );
     }
+
+    private List<Map<String, Object>> generateSeatMap() {
+        List<Map<String, Object>> seats = new ArrayList<>();
+        String[] rows = {"1", "3", "7", "8", "10", "11", "12", "20", "21", "22","23","24","25","26","27","28","29","30","31","32"};
+        String[] columns = {"A", "B", "C", "D", "E", "F"};
+        String[] columns1 = {"A", "B","E", "F"};
+        String[] columns2 = {"B", "C", "D", "E"};
+        for (String row : rows) {
+            if(row.equals("1") || row.equals("3")) {
+                for (String column : columns1) {
+                    seats.add(Map.of(
+                            "id", row + "-" + column,
+                            "isReserved", random.nextBoolean(),
+                            "class","Business"
+                    ));
+                }
+            }
+            else if(row.equals("20")){
+                for (String column : columns2) {
+                    seats.add(Map.of(
+                            "id", row + "-" + column,
+                            "isReserved", random.nextBoolean(), // Randomly mark seats as reserved or available
+                            "class","Econom-Plus"
+
+                    ));
+                }
+            }
+            else {
+                for (String column : columns) {
+                    if(row.equals("7") || row.equals("8") || row.equals("10") || row.equals("11") || row.equals("12") || row.equals("21")) {
+                        seats.add(Map.of(
+                                "id", row + "-" + column,
+                                "isReserved", random.nextBoolean(),
+                                "class","Econom-Plus"
+                        ));
+                    }
+                    else{
+                        seats.add(Map.of(
+                                "id", row + "-" + column,
+                                "isReserved", random.nextBoolean(),
+                                "class","Economy"
+                        ));
+                    }
+                }
+            }
+        }
+        return seats;
+    }
+
 
     // Returns a random date between 1 and 5 days after the provided reference date (format: YYYY-MM-DD)
     private String getRandomDate(String referenceDate) {
