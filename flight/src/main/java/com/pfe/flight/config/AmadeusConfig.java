@@ -10,7 +10,8 @@ public class AmadeusConfig {
 
     @Bean
     public Dotenv dotenv() {
-        return Dotenv.load();
+        return Dotenv.configure().directory("./flight/").load();
+
     }
 
     @Bean

@@ -1,16 +1,14 @@
 spring:
   application:
-    name: flight
+    name: hotel
   data:
     mongodb:
       uri: mongodb://localhost:27017/PFE
 server:
-  port: 8050
+  port: 8060
 
-amadeus:
-  api:
-    key: 8sILHrr9qpoORGbmgczUDTyfVARAAUmI
-    secret: GqI0o1v8abouwgAs
+
+
 
 logging:
   level:
