@@ -73,11 +73,10 @@ public class HotelFakerService {
         }
     }
 
-    // Instance method to generate a fake hotel
-    public Hotel generateFakeHotel(String countryName, String stateName, double latitude, double longitude) {
-        String hotelName = "Hotel " + faker.company().name();
+    // Updated method to use the provided hotelName
+    public Hotel generateFakeHotel(String hotelName, String countryName, String stateName, double latitude, double longitude) {
         String address = faker.address().streetAddress() + ", " + stateName + ", " + countryName;
-        List<Room> rooms = generateFakeRooms(random.nextInt(5) + 2); // 1-3 rooms
+        List<Room> rooms = generateFakeRooms(random.nextInt(5) + 2); // 2-6 rooms
         return new Hotel(hotelName, address, latitude, longitude, rooms);
     }
 
