@@ -1,9 +1,13 @@
 package com.pfe.hotel.controller;
 
+import com.pfe.hotel.DTO.BookingRequest;
 import com.pfe.hotel.service.AmadeusService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.pfe.hotel.service.HotelFakerService;
+import com.pfe.hotel.repository.BookingRepository;
+import com.pfe.hotel.model.Booking;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -19,9 +23,11 @@ public class HotelController {
 
     private final AmadeusService amadeusService;
     private final HotelFakerService hotelFakerService;
-    public HotelController(AmadeusService amadeusService, HotelFakerService hotelFakerService) {
+    private final BookingRepository bookingRepository;
+    public HotelController(AmadeusService amadeusService, HotelFakerService hotelFakerService, BookingRepository bookingRepository) {
         this.amadeusService = amadeusService;
         this.hotelFakerService = hotelFakerService;
+        this.bookingRepository = bookingRepository;
     }
 
     @GetMapping("/search")
@@ -82,6 +88,32 @@ public class HotelController {
             return Map.of("country", country, "state", state);
         } catch (Exception e) {
             throw new RuntimeException("Failed to fetch location data, bro! " + e.getMessage(), e);
+        }
+    }
+    @PostMapping("/book")
+    public ResponseEntity<Booking> createBooking(@RequestBody BookingRequest bookingRequest) {
+        try {
+            LocalDate checkInDate = LocalDate.parse(bookingRequest.getCheckInDate());
+            LocalDate checkOutDate = LocalDate.parse(bookingRequest.getCheckOutDate());
+            // Updated Booking constructor with all fields
+            Booking booking = new Booking(
+                    bookingRequest.getUserId(),
+                    bookingRequest.getHotelName(),
+                    bookingRequest.getHotelAddress(),
+                    bookingRequest.getRoomType(),
+                    bookingRequest.getRoomFeatures(),
+                    bookingRequest.getRoomPricePerNight(),
+                    checkInDate,
+                    checkOutDate,
+                    bookingRequest.getNotes(),
+                    bookingRequest.getTotalPrice()
+            );
+            System.out.println("Booking: " + booking.getNotes());
+
+            Booking savedBooking = bookingRepository.save(booking);
+            return ResponseEntity.ok(savedBooking);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(null);
         }
     }
 }
