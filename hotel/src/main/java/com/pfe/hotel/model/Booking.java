@@ -1,13 +1,18 @@
 package com.pfe.hotel.model;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.LocalDate;
 import java.util.List;
 
+@Setter
+@Getter
 @Document(collection = "hotelBookings")
 public class Booking {
 
+    // Getters and Setters
     @Id
     private String id;
     private String userId;          // New: To track who’s booking
@@ -40,37 +45,4 @@ public class Booking {
         this.totalPrice = totalPrice;
     }
 
-    // Getters and Setters
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
-
-    public String getUserId() { return userId; }
-    public void setUserId(String userId) { this.userId = userId; }
-
-    public String getHotelName() { return hotelName; }
-    public void setHotelName(String hotelName) { this.hotelName = hotelName; }
-
-    public String getHotelAddress() { return hotelAddress; }
-    public void setHotelAddress(String hotelAddress) { this.hotelAddress = hotelAddress; }
-
-    public String getRoomType() { return roomType; }
-    public void setRoomType(String roomType) { this.roomType = roomType; }
-
-    public List<String> getRoomFeatures() { return roomFeatures; }
-    public void setRoomFeatures(List<String> roomFeatures) { this.roomFeatures = roomFeatures; }
-
-    public double getRoomPricePerNight() { return roomPricePerNight; }
-    public void setRoomPricePerNight(double roomPricePerNight) { this.roomPricePerNight = roomPricePerNight; }
-
-    public LocalDate getCheckInDate() { return checkInDate; }
-    public void setCheckInDate(LocalDate checkInDate) { this.checkInDate = checkInDate; }
-
-    public LocalDate getCheckOutDate() { return checkOutDate; }
-    public void setCheckOutDate(LocalDate checkOutDate) { this.checkOutDate = checkOutDate; }
-
-    public String getNotes() { return notes; }
-    public void setNotes(String notes) { this.notes = notes; }
-
-    public double getTotalPrice() { return totalPrice; }
-    public void setTotalPrice(double totalPrice) { this.totalPrice = totalPrice; }
 }

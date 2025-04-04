@@ -4,6 +4,8 @@ spring:
   data:
     mongodb:
       uri: mongodb://localhost:27017/PFE
+  profiles:
+    active: amadeus
 server:
   port: 8060
 

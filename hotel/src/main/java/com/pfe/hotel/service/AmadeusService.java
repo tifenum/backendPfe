@@ -8,6 +8,7 @@ import com.amadeus.resources.Resource;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
+import com.pfe.hotel.config.AmadeusProperties;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.stereotype.Service;
 
@@ -23,14 +24,12 @@ public class AmadeusService {
     private final ObjectMapper objectMapper;
     private final Gson gson;
 
-    public AmadeusService(ObjectMapper objectMapper) {
-        // Load API keys from the .env file located in ./hotel/ directory
-        Dotenv dotenv = Dotenv.configure().directory("./hotel/").load();
-        String apiKey = dotenv.get("AMADEUS_API_KEY");
-        String apiSecret = dotenv.get("AMADEUS_API_SECRET");
+    public AmadeusService(ObjectMapper objectMapper, AmadeusProperties properties) {
+        String apiKey = properties.getKey();
+        String apiSecret = properties.getSecret();
 
         if (apiKey == null || apiSecret == null) {
-            throw new IllegalArgumentException("Missing API keys in .env file");
+            throw new IllegalArgumentException("Missing Amadeus API keys in configuration");
         } else {
             System.out.println("API Key: " + apiKey);
             System.out.println("API Secret: " + apiSecret);
