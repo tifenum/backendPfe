@@ -9,7 +9,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.pfe.hotel.config.AmadeusProperties;
-import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
@@ -42,16 +41,12 @@ public class AmadeusService {
 
     public List<Map<String, Object>> searchHotels(String cityCode) {
         try {
-            // Retrieve hotels using Amadeus API
             Resource[] hotels = amadeus.referenceData.locations.hotels.byCity.get(Params.with("cityCode", cityCode));
 
-            // Convert each Resource into a JSON-friendly Map using Gson and Jackson
             return Arrays.stream(hotels)
                     .limit(15)
                     .map(resource -> {
-                        // Convert the Resource into a JSON string using Gson
                         String json = gson.toJson(resource);
-                        // Now convert the JSON string into a Map<String, Object> using Jackson
                         try {
                             return objectMapper.readValue(json, new TypeReference<Map<String, Object>>() {});
                         } catch (Exception e) {
@@ -74,13 +69,11 @@ public class AmadeusService {
             String jsonResponse = response.getBody();
             System.out.println("Raw Response from Amadeus API: " + jsonResponse);
 
-            // Convert JSON response into a Map
             Map<String, Object> responseMap = objectMapper.readValue(jsonResponse, new TypeReference<Map<String, Object>>() {});
 
-            // Extract "data" array
             List<Map<String, Object>> cities = (List<Map<String, Object>>) responseMap.get("data");
 
-            return cities;  // Return directly instead of unnecessary conversion to `Resource[]`
+            return cities;
         } catch (ResponseException e) {
             throw new RuntimeException("City search failed: " + e.getDescription(), e);
         } catch (Exception e) {
@@ -93,7 +86,7 @@ public class AmadeusService {
                     Params.with("latitude", String.valueOf(latitude))
                             .and("longitude", String.valueOf(longitude))
                             .and("radius", String.valueOf(radius))
-                            .and("radiusUnit", "KM")); // Always set unit to kilometers
+                            .and("radiusUnit", "KM"));
 
             String jsonResponse = response.getBody();
             Map<String, Object> responseMap = objectMapper.readValue(jsonResponse,

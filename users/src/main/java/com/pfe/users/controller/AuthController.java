@@ -23,7 +23,6 @@ public class AuthController {
     @Autowired
     private KeycloakService keycloakService;
 
-    // Direct user registration without admin API
     @PostMapping("/signup")
     public Mono<ResponseEntity<String>> signUp(@RequestBody User user) {
         logger.info("Registering user with email: {}", user.getEmail());
@@ -35,7 +34,6 @@ public class AuthController {
                 );
     }
 
-    // Direct login using Resource Owner Password Credentials grant
     @PostMapping("/login")
     public Mono<ResponseEntity<TokenResponse>> login(@RequestBody User loginRequest) {
         logger.info("Received login request for email: {}", loginRequest.getEmail());
@@ -58,7 +56,6 @@ public class AuthController {
     }
     @GetMapping("/google")
     public Mono<Void> initiateGoogleLogin(ServerWebExchange exchange) {
-        // Build the Keycloak authorization URL with the Google IdP hint.
         String keycloakAuthUrl = keycloakService.getKeycloakServerUrl() + "/realms/" + keycloakService.getRealm() +
                 "/protocol/openid-connect/auth" +
                 "?client_id=" + keycloakService.getClientId() +

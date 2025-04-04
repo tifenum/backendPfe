@@ -16,7 +16,6 @@ public class FakerController {
         this.flightFaker = flightFaker;
     }
 
-    // Endpoint: /api/flights/offers?originLocationCode=PAR&destinationLocationCode=TUN&departureDate=2025-04-04&returnDate=2025-04-18&adults=1
     @GetMapping("/fake")
     public List<Map<String, Object>> getFlightOffers(
             @RequestParam String origin,

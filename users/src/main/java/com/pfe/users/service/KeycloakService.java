@@ -16,9 +16,6 @@ import java.util.Map;
 public class KeycloakService {
 
     private final WebClient webClient;
-
-    // Inside com.pfe.users.service.KeycloakService
-    // Keycloak configuration values (adjust as needed)
     @Getter
     @Value("${keycloak.server-url}")
     private String keycloakServerUrl;
@@ -34,7 +31,6 @@ public class KeycloakService {
     @Value("${keycloak.client-secret}")
     private String clientSecret;
 
-    // Admin token needed to call the Admin API (this should be obtained securely)
     @Value("${keycloak.admin-token}")
     private String adminToken;
 
@@ -42,9 +38,7 @@ public class KeycloakService {
         this.webClient = webClientBuilder.build();
     }
 
-    // Registration: Create user via Keycloak Admin API
     public Mono<Void> registerUser(User user) {
-        // Map your User object to Keycloak's expected payload
         var keycloakUserPayload = Map.of(
                 "username", user.getEmail(),
                 "email", user.getEmail(),
@@ -63,7 +57,6 @@ public class KeycloakService {
                 .bodyToMono(Void.class);
     }
 
-    // Login: Get token using Resource Owner Password Credentials grant
     public Mono<TokenResponse> loginUser(String username, String password) {
         return webClient.post()
                 .uri(keycloakServerUrl + "/realms/" + realm + "/protocol/openid-connect/token")

@@ -44,12 +44,10 @@ public class HotelController {
             @RequestParam double longitude,
             @RequestParam String hotelName) {
 
-        // Fetch country and state from coordinates
         Map<String, String> locationData = getLocationFromCoordinates(latitude, longitude);
         String countryName = locationData.get("country");
         String stateName = locationData.get("state");
 
-        // Generate the fake hotel with the fetched data
         return hotelFakerService.generateFakeHotel(hotelName, countryName, stateName, latitude, longitude);
     }
     @GetMapping("/by-geocode")
@@ -64,7 +62,6 @@ public class HotelController {
         return amadeusService.searchHotelsByKeyword(keyword);
     }
     private Map<String, String> getLocationFromCoordinates(double latitude, double longitude) {
-        // Force US locale to ensure dots (.) instead of commas (,) in decimal numbers
         String url = String.format(Locale.US, "https://nominatim.openstreetmap.org/reverse?format=json&lat=%f&lon=%f", latitude, longitude);
         RestTemplate restTemplate = new RestTemplate();
 
@@ -74,13 +71,11 @@ public class HotelController {
                 throw new RuntimeException("Nominatim API returned " + response.getStatusCode() + ": " + response.getBody());
             }
 
-            // Parse the JSON response
             ObjectMapper mapper = new ObjectMapper();
             JsonNode root = mapper.readTree(response.getBody());
             String country = root.path("address").path("country").asText("Unknown Country");
             String state = root.path("address").path("state").asText();
 
-            // Fallback to region or other fields if state is empty
             if (state.isEmpty()) {
                 state = root.path("address").path("region").asText("Unknown State");
             }
@@ -95,7 +90,6 @@ public class HotelController {
         try {
             LocalDate checkInDate = LocalDate.parse(bookingRequest.getCheckInDate());
             LocalDate checkOutDate = LocalDate.parse(bookingRequest.getCheckOutDate());
-            // Updated Booking constructor with all fields
             Booking booking = new Booking(
                     bookingRequest.getUserId(),
                     bookingRequest.getHotelName(),

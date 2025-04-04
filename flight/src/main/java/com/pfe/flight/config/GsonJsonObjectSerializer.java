@@ -14,7 +14,6 @@ public class GsonJsonObjectSerializer extends StdSerializer<JsonObject> {
 
     @Override
     public void serialize(JsonObject value, JsonGenerator gen, SerializerProvider provider) throws IOException {
-        // Write the JSON representation of the JsonObject
         gen.writeRawValue(value.toString());
     }
 }

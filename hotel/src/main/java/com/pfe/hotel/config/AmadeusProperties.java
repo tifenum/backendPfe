@@ -9,7 +9,6 @@ public class AmadeusProperties {
     private String key;
     private String secret;
 
-    // Getters and Setters
     public String getKey() {
         return key;
     }

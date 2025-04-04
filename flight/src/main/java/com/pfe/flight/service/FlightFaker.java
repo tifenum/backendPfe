@@ -12,7 +12,6 @@ import java.util.*;
 public class FlightFaker {
 
     private final Faker faker = new Faker();
-    // Use the Aviation class from JavaFaker (see documentation)
     private final Aviation aviation = faker.aviation();
     private final Random random = new Random();
 
@@ -22,7 +21,6 @@ public class FlightFaker {
 
         List<Map<String, Object>> flightOffers = new ArrayList<>();
 
-        // Generate 3 fake flight offers
         for (int i = 1; i <= 3; i++) {
             flightOffers.add(generateFlightOffer(originLocationCode, destinationLocationCode, departureDate, returnDate, i));
         }
@@ -46,37 +44,28 @@ public class FlightFaker {
         flightOffer.put("lastTicketingDateTime", getRandomDate(departureDate));
         flightOffer.put("numberOfBookableSeats", random.nextInt(10) + 1);
 
-        // Itineraries: one for departure and one for return
         List<Map<String, Object>> itineraries = new ArrayList<>();
         itineraries.add(generateItinerary(originLocationCode, destinationLocationCode, departureDate));
         itineraries.add(generateItinerary(destinationLocationCode, originLocationCode, returnDate));
         flightOffer.put("itineraries", itineraries);
 
-        // Price
         flightOffer.put("price", generatePrice());
 
-        // Pricing Options
         flightOffer.put("pricingOptions", Map.of("fareType", List.of("PUBLISHED"), "includedCheckedBagsOnly", false));
 
-        // Validating Airline (using a helper since Aviation doesn't provide one)
         String airlineCode = getAirlineCode();
         flightOffer.put("validatingAirlineCodes", List.of(airlineCode));
 
-        // Traveler Pricing
         flightOffer.put("travelerPricings", List.of(generateTravelerPricing(id)));
         List<Map<String, Object>> seatMap = generateSeatMap();
         return flightOffer;
     }
 
     private Map<String, Object> generateItinerary(String departureCode, String arrivalCode, String date) {
-        // For the carrier code, we use our helper method
         String carrierCode = getAirlineCode();
-        // For the aircraft, use the Aviation method per the documentation
         String aircraftCode = aviation.aircraft(); // e.g. "An-2"
-        // Simulate a flight number (3-digit number)
         String flightNumber = String.valueOf(random.nextInt(900) + 100);
 
-        // Generate random departure and arrival times based on the provided date
         String departureTime = date + "T" + String.format("%02d:%02d:00", random.nextInt(24), random.nextInt(60));
         String arrivalTime = date + "T" + String.format("%02d:%02d:00", random.nextInt(24), random.nextInt(60));
 
@@ -168,7 +157,7 @@ public class FlightFaker {
                 for (String column : columns2) {
                     seats.add(Map.of(
                             "id", row + "-" + column,
-                            "isReserved", random.nextBoolean(), // Randomly mark seats as reserved or available
+                            "isReserved", random.nextBoolean(),
                             "class","Econom-Plus"
 
                     ));
@@ -197,14 +186,12 @@ public class FlightFaker {
     }
 
 
-    // Returns a random date between 1 and 5 days after the provided reference date (format: YYYY-MM-DD)
     private String getRandomDate(String referenceDate) {
         LocalDate date = LocalDate.parse(referenceDate, DateTimeFormatter.ISO_DATE);
         int daysToAdd = random.nextInt(5) + 1;
         return date.plusDays(daysToAdd).toString();
     }
 
-    // Helper to simulate an airline code (since Aviation doesn't provide one)
     private String getAirlineCode() {
         String[] airlines = {"TU", "AF", "LH", "BA", "DL"};
         return airlines[random.nextInt(airlines.length)];

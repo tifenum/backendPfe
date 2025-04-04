@@ -12,13 +12,11 @@ public class HotelFakerService {
     private final Faker faker;
     private final Random random;
 
-    // Constructor to initialize instance fields
     public HotelFakerService() {
         this.faker = new Faker();
         this.random = new Random();
     }
 
-    // Hotel class with getters
     public static class Hotel {
         private String name;
         private String address;
@@ -34,7 +32,6 @@ public class HotelFakerService {
             this.rooms = rooms;
         }
 
-        // Getters for JSON serialization
         public String getName() { return name; }
         public String getAddress() { return address; }
         public double getLatitude() { return latitude; }
@@ -50,7 +47,6 @@ public class HotelFakerService {
         }
     }
 
-    // Room class with getters
     public static class Room {
         private String type;
         private double price;
@@ -62,7 +58,6 @@ public class HotelFakerService {
             this.features = features;
         }
 
-        // Getters for JSON serialization
         public String getType() { return type; }
         public double getPrice() { return price; }
         public List<String> getFeatures() { return features; }
@@ -73,14 +68,12 @@ public class HotelFakerService {
         }
     }
 
-    // Updated method to use the provided hotelName
     public Hotel generateFakeHotel(String hotelName, String countryName, String stateName, double latitude, double longitude) {
         String address = faker.address().streetAddress() + ", " + stateName + ", " + countryName;
         List<Room> rooms = generateFakeRooms(random.nextInt(5) + 2); // 2-6 rooms
         return new Hotel(hotelName, address, latitude, longitude, rooms);
     }
 
-    // Instance method to generate fake rooms
     private List<Room> generateFakeRooms(int numRooms) {
         List<Room> rooms = new ArrayList<>();
         String[] roomTypes = {"Single", "Double", "Suite", "Deluxe"};
@@ -104,7 +97,6 @@ public class HotelFakerService {
         return rooms;
     }
 
-    // Instance method to pick random features
     private List<String> generateRandomFeatures(String[] featureOptions) {
         int numFeatures = random.nextInt(3) + 2; // 2-4 features
         List<String> features = new ArrayList<>();

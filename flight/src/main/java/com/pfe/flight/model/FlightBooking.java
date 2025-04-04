@@ -18,8 +18,8 @@ public class FlightBooking {
 
     @Id
     private String id;
-    private String userId;            // Change from Long to String
-    private Object flightDetails;     // Can be Map<String, Object> if preferred
+    private String userId;
+    private Object flightDetails;
     private String bookingStatus;
 
     @Override

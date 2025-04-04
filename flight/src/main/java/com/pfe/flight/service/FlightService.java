@@ -33,13 +33,11 @@ public class FlightService {
         this.gson = new Gson();
     }
     public Mono<FlightBooking> bookFlight(FlightBooking flightBooking) {
-        // Logic to save the booking
         return flightBookingRepository.save(flightBooking);
     }
     public Mono<List<Map<String, Object>>> searchFlights(String origin, String destination, String departureDate, int adults) {
         return Mono.fromCallable(() -> {
             try {
-                // Make the request to Amadeus API to get flight offers
                 FlightOfferSearch[] offers = amadeus.shopping.flightOffersSearch.get(Params
                         .with("originLocationCode", origin)
                         .and("destinationLocationCode", destination)
@@ -49,20 +47,16 @@ public class FlightService {
 
                 return Arrays.stream(offers)
                         .map(offer -> {
-                            // First, convert the offer to a JSON string using Gson
                             String json = gson.toJson(offer);
 
-                            // Use Gson to parse the response manually
                             JsonElement jsonElement = gson.fromJson(json, JsonElement.class);
                             JsonElement responseElement = jsonElement.getAsJsonObject().get("response");
 
-                            // Manually handle the issue where the data field might be an array of integers
                             if (responseElement != null && responseElement.isJsonArray()) {
-                                JsonElement dataElement = responseElement.getAsJsonArray().get(0);  // Adjust based on the structure
+                                JsonElement dataElement = responseElement.getAsJsonArray().get(0);
                                 jsonElement.getAsJsonObject().add("response", dataElement);
                             }
 
-                            // Convert the modified JSON back into a Map using Jackson
                             try {
                                 return objectMapper.readValue(jsonElement.toString(), new TypeReference<Map<String, Object>>() {});
                             } catch (Exception e) {

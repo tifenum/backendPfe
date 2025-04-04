@@ -13,9 +13,7 @@ public class SecurityConfig {
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         return http
-                // Disable CSRF protection for testing or non-browser clients
                 .csrf(csrf -> csrf.disable())
-                // Allow all exchanges without authentication
                 .authorizeExchange(exchanges -> exchanges
                         .anyExchange().permitAll())
                 .build();
