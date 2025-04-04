@@ -12,7 +12,8 @@ target/
 .settings
 .springBeans
 .sts4-cache
-application-amadeus.yaml
+# Ignore Amadeus config file
+src/main/resources/application-amadeus.yaml
 ### IntelliJ IDEA ###
 .idea
 *.iws

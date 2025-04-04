@@ -1,7 +1,6 @@
 package com.pfe.flight.config;
 
 import com.amadeus.Amadeus;
-import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -9,16 +8,11 @@ import org.springframework.context.annotation.Configuration;
 public class AmadeusConfig {
 
     @Bean
-    public Dotenv dotenv() {
-        return Dotenv.configure().directory("./flight/").load();
-
-    }
-
-    @Bean
-    public Amadeus amadeus(Dotenv dotenv) {
-        return Amadeus.builder(
-                dotenv.get("AMADEUS_API_KEY"),
-                dotenv.get("AMADEUS_API_SECRET")
-        ).build();
+    public Amadeus amadeus(AmadeusProperties properties) {
+        String apiKey = properties.getKey();
+        String apiSecret = properties.getSecret();
+        System.out.println("apikey :"+apiKey);
+        System.out.println("apisecret :"+apiSecret);
+        return Amadeus.builder(apiKey, apiSecret).build();
     }
 }

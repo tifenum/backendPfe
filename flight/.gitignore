@@ -12,7 +12,7 @@ target/
 .settings
 .springBeans
 .sts4-cache
-
+src/main/resources/application-amadeus.yaml
 ### IntelliJ IDEA ###
 .idea
 *.iws
@@ -29,7 +29,6 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-/.env
 
 ### VS Code ###
 .vscode/
