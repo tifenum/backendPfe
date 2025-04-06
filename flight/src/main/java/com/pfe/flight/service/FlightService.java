@@ -8,8 +8,11 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
-import com.pfe.flight.model.FlightBooking;
-import com.pfe.flight.reposetery.FlightBookingRepository;
+import com.pfe.flight.DTO.FlightBookingRequestDto;
+import com.pfe.flight.DTO.FlightBookingResponseDto;
+import com.pfe.flight.DTO.FlightDetailsDto;
+import com.pfe.flight.dao.BookingDao;
+import com.pfe.flight.dao.entity.FlightBooking;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
@@ -24,17 +27,35 @@ public class FlightService {
     private final Amadeus amadeus;
     private final ObjectMapper objectMapper;
     private final Gson gson;
-    private final FlightBookingRepository flightBookingRepository;
+    private final BookingDao bookingDao;
 
-    public FlightService(Amadeus amadeus, ObjectMapper objectMapper, FlightBookingRepository flightBookingRepository) {
+    public FlightService(Amadeus amadeus, ObjectMapper objectMapper, BookingDao bookingDao) {
         this.amadeus = amadeus;
         this.objectMapper = objectMapper;
-        this.flightBookingRepository = flightBookingRepository;
+        this.bookingDao = bookingDao;
         this.gson = new Gson();
     }
-    public Mono<FlightBooking> bookFlight(FlightBooking flightBooking) {
-        return flightBookingRepository.save(flightBooking);
+
+
+
+    public Mono<FlightBooking> bookFlight(FlightBookingRequestDto requestDto) {
+        // Create and populate the entity directly
+        FlightBooking flightBooking = new FlightBooking();
+        flightBooking.setUserId(requestDto.getUserId());
+        flightBooking.setBookingStatus(requestDto.getBookingStatus());
+
+        // Store the flight details as JSON string
+        try {
+            String flightDetailsJson = objectMapper.writeValueAsString(requestDto.getFlightDetails());
+            flightBooking.setFlightDetails(flightDetailsJson);  // Storing as String
+        } catch (Exception e) {
+            return Mono.error(new RuntimeException("Failed to serialize flight details", e));
+        }
+
+        // Save and return the raw entity
+        return bookingDao.save(flightBooking);
     }
+
     public Mono<List<Map<String, Object>>> searchFlights(String origin, String destination, String departureDate, int adults) {
         return Mono.fromCallable(() -> {
             try {

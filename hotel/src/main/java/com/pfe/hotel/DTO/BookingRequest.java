@@ -17,5 +17,4 @@ public class BookingRequest {
     private String checkOutDate;
     private String notes;
     private double totalPrice;
-
 }

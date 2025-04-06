@@ -6,6 +6,9 @@ spring:
       uri: mongodb://localhost:27017/PFE
   profiles:
     active: amadeus
+  jackson:
+    deserialization:
+      fail-on-ignored-properties: false
 server:
   port: 8050
 
@@ -20,4 +23,7 @@ logging:
       springframework:
         web: DEBUG
         http: DEBUG
-
+        validation: TRACE  # For validation errors (e.g., @NotNull, @NotBlank)
+    com:
+      fasterxml:
+        jackson: TRACE  # For detailed Jackson deserialization errors

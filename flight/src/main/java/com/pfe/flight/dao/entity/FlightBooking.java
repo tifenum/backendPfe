@@ -1,4 +1,4 @@
-package com.pfe.flight.model;
+package com.pfe.flight.dao.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
@@ -6,8 +6,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-import java.util.Map;
-import java.util.List;
 
 @Document(collection = "flight_bookings")
 @Data

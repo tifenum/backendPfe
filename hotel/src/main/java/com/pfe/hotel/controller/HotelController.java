@@ -1,12 +1,14 @@
 package com.pfe.hotel.controller;
 
 import com.pfe.hotel.DTO.BookingRequest;
+import com.pfe.hotel.DTO.BookingResponseDTO;
 import com.pfe.hotel.service.AmadeusService;
+import com.pfe.hotel.service.BookingService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.pfe.hotel.service.HotelFakerService;
-import com.pfe.hotel.repository.BookingRepository;
-import com.pfe.hotel.model.Booking;
+import com.pfe.hotel.dao.repository.BookingRepository;
+import com.pfe.hotel.dao.entity.Booking;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
@@ -23,11 +25,11 @@ public class HotelController {
 
     private final AmadeusService amadeusService;
     private final HotelFakerService hotelFakerService;
-    private final BookingRepository bookingRepository;
-    public HotelController(AmadeusService amadeusService, HotelFakerService hotelFakerService, BookingRepository bookingRepository) {
+    private final BookingService bookingService;
+    public HotelController(AmadeusService amadeusService, HotelFakerService hotelFakerService, BookingService bookingService) {
         this.amadeusService = amadeusService;
         this.hotelFakerService = hotelFakerService;
-        this.bookingRepository = bookingRepository;
+        this.bookingService = bookingService;
     }
 
     @GetMapping("/search")
@@ -87,27 +89,17 @@ public class HotelController {
     }
     @PostMapping("/book")
     public ResponseEntity<Booking> createBooking(@RequestBody BookingRequest bookingRequest) {
-        try {
-            LocalDate checkInDate = LocalDate.parse(bookingRequest.getCheckInDate());
-            LocalDate checkOutDate = LocalDate.parse(bookingRequest.getCheckOutDate());
-            Booking booking = new Booking(
-                    bookingRequest.getUserId(),
-                    bookingRequest.getHotelName(),
-                    bookingRequest.getHotelAddress(),
-                    bookingRequest.getRoomType(),
-                    bookingRequest.getRoomFeatures(),
-                    bookingRequest.getRoomPricePerNight(),
-                    checkInDate,
-                    checkOutDate,
-                    bookingRequest.getNotes(),
-                    bookingRequest.getTotalPrice()
-            );
-            System.out.println("Booking: " + booking.getNotes());
-
-            Booking savedBooking = bookingRepository.save(booking);
-            return ResponseEntity.ok(savedBooking);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(null);
-        }
+        return ResponseEntity.ok(bookingService.createBookingFromRequest(bookingRequest));
     }
+    @GetMapping("/reservations")
+    public ResponseEntity<List<BookingResponseDTO>> getReservations(@RequestParam String userId) {
+        List<BookingResponseDTO> bookingResponseDTOList = bookingService.getReservationsByUserId(userId);
+
+        if (bookingResponseDTOList.isEmpty()) {
+            return ResponseEntity.noContent().build(); // No reservations found
+        }
+
+        return ResponseEntity.ok(bookingResponseDTOList); // Return the DTO list in the response
+    }
+
 }

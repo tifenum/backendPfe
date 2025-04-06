@@ -1,7 +1,7 @@
-package com.pfe.flight.reposetery;
+package com.pfe.flight.dao.repository;
 
 
-import com.pfe.flight.model.FlightBooking;
+import com.pfe.flight.dao.entity.FlightBooking;
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 
 public interface FlightBookingRepository extends ReactiveMongoRepository<FlightBooking, String> {

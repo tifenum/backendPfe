@@ -1,20 +1,12 @@
-package com.pfe.hotel.model;
+package com.pfe.hotel.DTO;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
+
 import java.time.LocalDate;
 import java.util.List;
-
-@Setter
-@Getter
-@Document(collection = "hotelBookings")
-public class Booking {
-
-    @Id
-    private String id;
-    private String userId;
+@Getter @Setter
+public class BookingResponseDTO {
     private String hotelName;
     private String hotelAddress;
     private String roomType;
@@ -25,12 +17,12 @@ public class Booking {
     private String notes;
     private double totalPrice;
 
-    public Booking() {}
+    // Getters and setters...
 
-    public Booking(String userId, String hotelName, String hotelAddress, String roomType,
-                   List<String> roomFeatures, double roomPricePerNight, LocalDate checkInDate,
-                   LocalDate checkOutDate, String notes, double totalPrice) {
-        this.userId = userId;
+    public BookingResponseDTO(String hotelName, String hotelAddress, String roomType,
+                              List<String> roomFeatures, double roomPricePerNight,
+                              LocalDate checkInDate, LocalDate checkOutDate, String notes,
+                              double totalPrice) {
         this.hotelName = hotelName;
         this.hotelAddress = hotelAddress;
         this.roomType = roomType;
@@ -41,5 +33,4 @@ public class Booking {
         this.notes = notes;
         this.totalPrice = totalPrice;
     }
-
 }
