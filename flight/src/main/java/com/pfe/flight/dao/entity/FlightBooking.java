@@ -20,12 +20,4 @@ public class FlightBooking {
     private Object flightDetails;
     private String bookingStatus;
 
-    @Override
-    public String toString() {
-        return "FlightBooking{" +
-                "userId='" + userId + '\'' +
-                ", flightDetails=" + flightDetails +
-                ", bookingStatus='" + bookingStatus + '\'' +
-                '}';
-    }
 }

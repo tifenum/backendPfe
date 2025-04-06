@@ -4,6 +4,8 @@ import com.amadeus.Amadeus;
 import com.amadeus.Params;
 import com.amadeus.exceptions.ResponseException;
 import com.amadeus.resources.FlightOfferSearch;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
@@ -11,11 +13,15 @@ import com.google.gson.JsonElement;
 import com.pfe.flight.DTO.FlightBookingRequestDto;
 import com.pfe.flight.DTO.FlightBookingResponseDto;
 import com.pfe.flight.DTO.FlightDetailsDto;
+import com.pfe.flight.DTO.SlimFlightBookingDto;
 import com.pfe.flight.dao.BookingDao;
 import com.pfe.flight.dao.entity.FlightBooking;
+import com.pfe.flight.mappers.FlightBookingMapper;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -29,10 +35,12 @@ public class FlightService {
     private final Gson gson;
     private final BookingDao bookingDao;
 
-    public FlightService(Amadeus amadeus, ObjectMapper objectMapper, BookingDao bookingDao) {
+    private final FlightBookingMapper flightBookingMapper;
+    public FlightService(Amadeus amadeus, ObjectMapper objectMapper, BookingDao bookingDao, FlightBookingMapper flightBookingMapper) {
         this.amadeus = amadeus;
         this.objectMapper = objectMapper;
         this.bookingDao = bookingDao;
+        this.flightBookingMapper = flightBookingMapper;
         this.gson = new Gson();
     }
 
@@ -45,12 +53,8 @@ public class FlightService {
         flightBooking.setBookingStatus(requestDto.getBookingStatus());
 
         // Store the flight details as JSON string
-        try {
-            String flightDetailsJson = objectMapper.writeValueAsString(requestDto.getFlightDetails());
-            flightBooking.setFlightDetails(flightDetailsJson);  // Storing as String
-        } catch (Exception e) {
-            return Mono.error(new RuntimeException("Failed to serialize flight details", e));
-        }
+        flightBooking.setFlightDetails(requestDto.getFlightDetails());
+
 
         // Save and return the raw entity
         return bookingDao.save(flightBooking);
@@ -89,5 +93,9 @@ public class FlightService {
                 throw new RuntimeException("Flight search failed: " + e.getDescription(), e);
             }
         });
+    }
+    public Flux<SlimFlightBookingDto> getBookingsByUserId(String userId) {
+        return bookingDao.findByUserId(userId)
+                .map(flightBookingMapper::mapToSlimDto);
     }
 }

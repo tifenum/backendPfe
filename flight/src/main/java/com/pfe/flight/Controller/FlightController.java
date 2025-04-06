@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pfe.flight.DTO.FlightBookingRequestDto;
 import com.pfe.flight.DTO.FlightBookingResponseDto;
+import com.pfe.flight.DTO.SlimFlightBookingDto;
 import com.pfe.flight.dao.entity.FlightBooking;
 import com.pfe.flight.service.FlightService;
 import org.springframework.http.HttpStatus;
@@ -44,4 +45,10 @@ public class FlightController {
             @RequestParam int adults) {
         return flightService.searchFlights(origin, destination, departureDate, adults);
     }
+    @GetMapping("/bookings")
+    public Mono<List<SlimFlightBookingDto>> getBookings(@RequestParam String userId) {
+        return flightService.getBookingsByUserId(userId)
+                .collectList();
+    }
+
 }

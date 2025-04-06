@@ -57,7 +57,8 @@ public class BookingService {
                         reservation.getCheckInDate(),
                         reservation.getCheckOutDate(),
                         reservation.getNotes(),
-                        reservation.getTotalPrice()
+                        reservation.getTotalPrice(),
+                        reservation.getReservationStatus()
                 ))
                 .collect(Collectors.toList());
     }

@@ -16,13 +16,14 @@ public class BookingResponseDTO {
     private LocalDate checkOutDate;
     private String notes;
     private double totalPrice;
+    private String reservationStatus;
 
     // Getters and setters...
 
     public BookingResponseDTO(String hotelName, String hotelAddress, String roomType,
                               List<String> roomFeatures, double roomPricePerNight,
                               LocalDate checkInDate, LocalDate checkOutDate, String notes,
-                              double totalPrice) {
+                              double totalPrice, String reservationStatus) {
         this.hotelName = hotelName;
         this.hotelAddress = hotelAddress;
         this.roomType = roomType;
@@ -32,5 +33,6 @@ public class BookingResponseDTO {
         this.checkOutDate = checkOutDate;
         this.notes = notes;
         this.totalPrice = totalPrice;
+        this.reservationStatus = reservationStatus; // Default status
     }
 }

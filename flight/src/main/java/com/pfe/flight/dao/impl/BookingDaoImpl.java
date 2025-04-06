@@ -5,6 +5,7 @@ import com.pfe.flight.dao.entity.FlightBooking;
 import com.pfe.flight.dao.repository.FlightBookingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Repository
@@ -16,5 +17,9 @@ public class BookingDaoImpl implements BookingDao {
     @Override
     public Mono<FlightBooking> save(FlightBooking booking) {
         return FlightBookingRepository.save(booking);
+    }
+    @Override
+    public Flux<FlightBooking> findByUserId(String userId) {
+        return FlightBookingRepository.findByUserId(userId);
     }
 }

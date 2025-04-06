@@ -24,7 +24,7 @@ public class Booking {
     private LocalDate checkOutDate;
     private String notes;
     private double totalPrice;
-
+    private String reservationStatus;
     public Booking() {}
 
     public Booking(String userId, String hotelName, String hotelAddress, String roomType,
@@ -40,6 +40,7 @@ public class Booking {
         this.checkOutDate = checkOutDate;
         this.notes = notes;
         this.totalPrice = totalPrice;
+        this.reservationStatus = "Pending"; // Default status
     }
 
 }
