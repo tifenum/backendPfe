@@ -5,6 +5,7 @@ import lombok.Data;
 @Data
 
 public class SlimFlightBookingDto {
+    private String id;
     private String userId;
     private String departureAirport;
     private String departureTime;

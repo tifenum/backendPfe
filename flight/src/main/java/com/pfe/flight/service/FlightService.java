@@ -36,9 +36,9 @@ public class FlightService {
     private final BookingDao bookingDao;
 
     private final FlightBookingMapper flightBookingMapper;
-    public FlightService(Amadeus amadeus, ObjectMapper objectMapper, BookingDao bookingDao, FlightBookingMapper flightBookingMapper) {
+    public FlightService(Amadeus amadeus, ObjectMapper objectMapper, ObjectMapper objectMapper1, BookingDao bookingDao, FlightBookingMapper flightBookingMapper) {
         this.amadeus = amadeus;
-        this.objectMapper = objectMapper;
+        this.objectMapper = objectMapper1;
         this.bookingDao = bookingDao;
         this.flightBookingMapper = flightBookingMapper;
         this.gson = new Gson();
@@ -47,17 +47,12 @@ public class FlightService {
 
 
     public Mono<FlightBooking> bookFlight(FlightBookingRequestDto requestDto) {
-        // Create and populate the entity directly
-        FlightBooking flightBooking = new FlightBooking();
-        flightBooking.setUserId(requestDto.getUserId());
-        flightBooking.setBookingStatus(requestDto.getBookingStatus());
-
-        // Store the flight details as JSON string
-        flightBooking.setFlightDetails(requestDto.getFlightDetails());
-
-
-        // Save and return the raw entity
+        FlightBooking flightBooking = flightBookingMapper.toEntity(requestDto);
         return bookingDao.save(flightBooking);
+    }
+    public Mono<SlimFlightBookingDto> updateBookingStatus(String bookingId, String newStatus) {
+        return bookingDao.updateBookingStatus(bookingId, newStatus)
+                .map(flightBookingMapper::mapToSlimDto);
     }
 
     public Mono<List<Map<String, Object>>> searchFlights(String origin, String destination, String departureDate, int adults) {
@@ -98,4 +93,10 @@ public class FlightService {
         return bookingDao.findByUserId(userId)
                 .map(flightBookingMapper::mapToSlimDto);
     }
+
+    public Flux<SlimFlightBookingDto> getPendingBookings() {
+        return bookingDao.findByBookingStatus("Pending")
+                .map(flightBookingMapper::mapToSlimDto);
+    }
+
 }

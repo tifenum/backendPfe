@@ -3,27 +3,28 @@ package com.pfe.hotel.DTO;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.LocalDate;
 import java.util.List;
 @Getter @Setter
 public class BookingResponseDTO {
+    private String id; // Added for frontend compatibility
     private String hotelName;
     private String hotelAddress;
     private String roomType;
     private List<String> roomFeatures;
     private double roomPricePerNight;
-    private LocalDate checkInDate;
-    private LocalDate checkOutDate;
+    private String checkInDate;
+    private String checkOutDate;
     private String notes;
     private double totalPrice;
     private String reservationStatus;
 
     // Getters and setters...
 
-    public BookingResponseDTO(String hotelName, String hotelAddress, String roomType,
+    public BookingResponseDTO(String id,String hotelName, String hotelAddress, String roomType,
                               List<String> roomFeatures, double roomPricePerNight,
-                              LocalDate checkInDate, LocalDate checkOutDate, String notes,
+                              String checkInDate, String checkOutDate, String notes,
                               double totalPrice, String reservationStatus) {
+        this.id = id;
         this.hotelName = hotelName;
         this.hotelAddress = hotelAddress;
         this.roomType = roomType;

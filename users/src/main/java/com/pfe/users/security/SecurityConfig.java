@@ -30,10 +30,8 @@ public class SecurityConfig {
 
     private static final Logger logger = LoggerFactory.getLogger(SecurityConfig.class);
 
-    private final UserRepository userRepository;
 
     public SecurityConfig(UserRepository userRepository) {
-        this.userRepository = userRepository;
     }
 
     @Bean
@@ -42,22 +40,8 @@ public class SecurityConfig {
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers(HttpMethod.OPTIONS).permitAll()
-                        .pathMatchers("/users/signup", "/users/login", "/users/google", "/users/google/callback").permitAll()
+                        .pathMatchers("/users/signup", "/users/login", "/users/google", "/users/google/callback", "users/clients").permitAll()
                         .anyExchange().authenticated()
-                )
-                .oauth2Login(oauth2 -> oauth2
-                        .authenticationSuccessHandler((webFilterExchange, authentication) -> {
-                            ServerHttpResponse response = webFilterExchange.getExchange().getResponse();
-                            response.setStatusCode(HttpStatus.SEE_OTHER);
-                            response.getHeaders().setLocation(URI.create("http://localhost:3000")); // Change redirect URL
-                            return Mono.empty();
-                        })
-                        .authenticationFailureHandler((webFilterExchange, exception) -> {
-                            ServerHttpResponse response = webFilterExchange.getExchange().getResponse();
-                            response.setStatusCode(HttpStatus.SEE_OTHER);
-                            response.getHeaders().setLocation(URI.create("http://localhost:3000/signin"));
-                            return Mono.empty();
-                        })
                 )
 
                 .build();

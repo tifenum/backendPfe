@@ -1,5 +1,6 @@
 package com.pfe.users.controller;
 
+import com.pfe.users.DTO.ClientUserDTO;
 import com.pfe.users.service.KeycloakService;
 import com.pfe.users.user.User;
 import com.pfe.users.DTO.TokenResponse;
@@ -13,6 +14,7 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
+import java.util.List;
 
 @RestController
 @RequestMapping("/users")
@@ -83,6 +85,16 @@ public class AuthController {
                             .body(new TokenResponse("Error during Google login: " + e.getMessage())));
                 });
     }
+    @GetMapping("/clients")
+    public Mono<ResponseEntity<List<ClientUserDTO>>> getAllClients() {
+        return keycloakService.getAllClients()
+                .map(clients -> ResponseEntity.ok(clients))
+                .onErrorResume(e -> {
+                    return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .body(null));
+                });
+    }
+
 
 
 }

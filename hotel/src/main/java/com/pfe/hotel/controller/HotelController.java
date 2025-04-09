@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.*;
 import com.pfe.hotel.service.HotelFakerService;
 import com.pfe.hotel.dao.repository.BookingRepository;
 import com.pfe.hotel.dao.entity.Booking;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -101,5 +100,30 @@ public class HotelController {
 
         return ResponseEntity.ok(bookingResponseDTOList); // Return the DTO list in the response
     }
+    // HotelController.java
+    @GetMapping("/all-reservations")
+    public ResponseEntity<List<BookingResponseDTO>> getAllPendingReservations() {
+        List<BookingResponseDTO> pendingReservations = bookingService.getPendingReservations();
 
+        if (pendingReservations.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+
+        return ResponseEntity.ok(pendingReservations);
+    }
+    @PutMapping("/reservations/{reservationId}/status")
+    public ResponseEntity<BookingResponseDTO> updateReservationStatus(
+            @PathVariable String reservationId,
+            @RequestBody Map<String, String> request) {
+        String newStatus = request.get("status");
+        try {
+            BookingResponseDTO updatedDto = bookingService.updateReservationStatus(reservationId, newStatus);
+            if (updatedDto == null) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.ok(updatedDto);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(null); // Could add a custom error message if you like
+        }
+    }
 }

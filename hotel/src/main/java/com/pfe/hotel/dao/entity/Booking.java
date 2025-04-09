@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-import java.time.LocalDate;
 import java.util.List;
 
 @Setter
@@ -20,16 +19,16 @@ public class Booking {
     private String roomType;
     private List<String> roomFeatures;
     private double roomPricePerNight;
-    private LocalDate checkInDate;
-    private LocalDate checkOutDate;
+    private String checkInDate;
+    private String checkOutDate;
     private String notes;
     private double totalPrice;
     private String reservationStatus;
     public Booking() {}
 
     public Booking(String userId, String hotelName, String hotelAddress, String roomType,
-                   List<String> roomFeatures, double roomPricePerNight, LocalDate checkInDate,
-                   LocalDate checkOutDate, String notes, double totalPrice) {
+                   List<String> roomFeatures, double roomPricePerNight, String checkInDate,
+                   String checkOutDate, String notes, double totalPrice) {
         this.userId = userId;
         this.hotelName = hotelName;
         this.hotelAddress = hotelAddress;

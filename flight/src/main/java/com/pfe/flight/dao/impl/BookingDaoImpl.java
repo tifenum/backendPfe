@@ -22,4 +22,16 @@ public class BookingDaoImpl implements BookingDao {
     public Flux<FlightBooking> findByUserId(String userId) {
         return FlightBookingRepository.findByUserId(userId);
     }
+    @Override
+    public Flux<FlightBooking> findByBookingStatus(String bookingStatus) {
+        return FlightBookingRepository.findByBookingStatus(bookingStatus);
+    }
+    @Override
+    public Mono<FlightBooking> updateBookingStatus(String bookingId, String newStatus) {
+        return FlightBookingRepository.findById(bookingId)
+                .flatMap(booking -> {
+                    booking.setBookingStatus(newStatus);
+                    return FlightBookingRepository.save(booking);
+                });
+    }
 }

@@ -1,86 +1,124 @@
 package com.pfe.flight.mappers;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.pfe.flight.DTO.FlightBookingRequestDto;
 import com.pfe.flight.DTO.SlimFlightBookingDto;
 import com.pfe.flight.dao.entity.FlightBooking;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
 @Component
 public class FlightBookingMapper {
-    private final ObjectMapper objectMapper;
 
-    public FlightBookingMapper(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
+    public FlightBooking toEntity(FlightBookingRequestDto dto) {
+        FlightBooking entity = new FlightBooking();
+        entity.setUserId(dto.getUserId());
+        entity.setBookingStatus(dto.getBookingStatus());
+
+        if (dto.getFlightDetails() != null) {
+            entity.setFlightDetails(mapFlightDetails(dto.getFlightDetails()));
+        }
+
+        return entity;
     }
 
-    @SuppressWarnings("unchecked")
-    public SlimFlightBookingDto mapToSlimDto(FlightBooking booking) {
-        SlimFlightBookingDto dto = new SlimFlightBookingDto();
-        dto.setUserId(booking.getUserId());
-        dto.setBookingStatus(booking.getBookingStatus()); // Set booking status
+    private FlightBooking.FlightDetails mapFlightDetails(FlightBookingRequestDto.FlightDetails dtoDetails) {
+        FlightBooking.FlightDetails details = new FlightBooking.FlightDetails();
+        details.setOneWay(dtoDetails.isOneWay());
+        details.setPrice(dtoDetails.getPrice());
+        details.setAirlineCodes(dtoDetails.getAirlineCodes());
+        details.setFlightId(dtoDetails.getId());
 
-        // 1) parse flightDetails into a Map
-        Object rawDetails = booking.getFlightDetails();
-        Map<String,Object> flightDetailsMap;
-        if (rawDetails instanceof String) {
-            try {
-                flightDetailsMap = objectMapper.readValue((String) rawDetails,
-                        new TypeReference<Map<String,Object>>() {});
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException("Failed to parse flightDetails JSON", e);
-            }
-        } else if (rawDetails instanceof Map) {
-            flightDetailsMap = (Map<String,Object>) rawDetails;
-        } else {
-            flightDetailsMap = Collections.emptyMap();
+        // Map the seat map
+        details.setSeatMap(dtoDetails.getSeatMap().stream()
+                .map(seatList -> seatList.stream()
+                        .map(this::mapSeat)
+                        .toList())
+                .toList());
+
+        // Map itineraries
+        details.setItineraries(dtoDetails.getItineraries().stream()
+                .map(this::mapItinerary)
+                .toList());
+
+        // Map the selected seat if present
+        if (dtoDetails.getSelectedSeat() != null) {
+            details.setSelectedSeat(mapSeat(dtoDetails.getSelectedSeat()));
         }
 
-        // 2) extract price
-        Map<String,Object> price = (Map<String,Object>) flightDetailsMap.get("price");
-        if (price != null) {
-            dto.setTotalPrice((String) price.get("grandTotal"));
-        }
+        return details;
+    }
 
-        // 3) extract itineraries
-        List<Map<String,Object>> itineraries =
-                (List<Map<String,Object>>) flightDetailsMap.get("itineraries");
-        if (itineraries != null && !itineraries.isEmpty()) {
-            // determine trip type
-            dto.setTripType(itineraries.size() > 1 ? "ROUND_TRIP" : "ONE_WAY");
+    private FlightBooking.Seat mapSeat(FlightBookingRequestDto.SeatDTO dto) {
+        FlightBooking.Seat seat = new FlightBooking.Seat();
+        seat.setId(dto.getId());
+        seat.setReserved(dto.isReserved());
+        seat.setSeatClass(dto.getSeatClass());
+        // Map the extraCost if provided (will be null for non-selected seats)
+        seat.setExtraCost(dto.getExtraCost());
+        return seat;
+    }
 
-            // first itinerary: departure info
-            Map<String,Object> firstItin = itineraries.get(0);
-            List<Map<String,Object>> firstSegs =
-                    (List<Map<String,Object>>) firstItin.get("segments");
-            if (firstSegs != null && !firstSegs.isEmpty()) {
-                Map<String,Object> dep = (Map<String,Object>) firstSegs.get(0).get("departure");
-                if (dep != null) {
-                    dto.setDepartureAirport((String) dep.get("iataCode"));
-                    // directly use string with space instead of 'T'
-                    String at = (String) dep.get("at");
-                    dto.setDepartureTime(at);
+    private FlightBooking.Itinerary mapItinerary(FlightBookingRequestDto.ItineraryDTO dto) {
+        FlightBooking.Itinerary itinerary = new FlightBooking.Itinerary();
+        itinerary.setDuration(dto.getDuration());
+        itinerary.setSegments(dto.getSegments().stream()
+                .map(this::mapSegment)
+                .toList());
+        return itinerary;
+    }
+
+    private FlightBooking.Segment mapSegment(FlightBookingRequestDto.SegmentDTO dto) {
+        FlightBooking.Segment segment = new FlightBooking.Segment();
+        segment.setDuration(dto.getDuration());
+        segment.setDeparture(mapAirport(dto.getDeparture()));
+        segment.setArrival(mapAirport(dto.getArrival()));
+        return segment;
+    }
+
+    private FlightBooking.Airport mapAirport(FlightBookingRequestDto.AirportDTO dto) {
+        FlightBooking.Airport airport = new FlightBooking.Airport();
+        airport.setIataCode(dto.getIataCode());
+        airport.setTerminal(dto.getTerminal());
+        airport.setAt(dto.getAt());
+        return airport;
+    }
+
+    public SlimFlightBookingDto mapToSlimDto(FlightBooking flightBooking) {
+        SlimFlightBookingDto slimDto = new SlimFlightBookingDto();
+        slimDto.setId(flightBooking.getId());
+        slimDto.setUserId(flightBooking.getUserId());
+        slimDto.setBookingStatus(flightBooking.getBookingStatus());
+
+        if (flightBooking.getFlightDetails() != null) {
+            FlightBooking.FlightDetails details = flightBooking.getFlightDetails();
+
+            // Map trip type: One Way or Round Trip
+            slimDto.setTripType(details.isOneWay() ? "One Way" : "Round Trip");
+
+            // Map total price (assuming the price is a string, as per the entity)
+            slimDto.setTotalPrice(details.getPrice());
+
+            // Map departure airport and departure time from the first itinerary's first segment, if available
+            if (details.getItineraries() != null && !details.getItineraries().isEmpty()) {
+                FlightBooking.Itinerary firstItinerary = details.getItineraries().get(0);
+                if (firstItinerary.getSegments() != null && !firstItinerary.getSegments().isEmpty()) {
+                    FlightBooking.Segment firstSegment = firstItinerary.getSegments().get(0);
+                    if (firstSegment.getDeparture() != null) {
+                        slimDto.setDepartureAirport(firstSegment.getDeparture().getIataCode());
+                        slimDto.setDepartureTime(firstSegment.getDeparture().getAt());
+                    }
+                }
+
+                // Map arrival airport from the last itinerary's last segment, if available
+                FlightBooking.Itinerary lastItinerary = details.getItineraries().get(details.getItineraries().size() - 1);
+                if (lastItinerary.getSegments() != null && !lastItinerary.getSegments().isEmpty()) {
+                    FlightBooking.Segment lastSegment = lastItinerary.getSegments().get(lastItinerary.getSegments().size() - 1);
+                    if (lastSegment.getArrival() != null) {
+                        slimDto.setArrivalAirport(lastSegment.getArrival().getIataCode());
+                    }
                 }
             }
-
-            // last itinerary: arrival info
-            Map<String,Object> lastItin = itineraries.get(itineraries.size() - 1);
-            List<Map<String,Object>> lastSegs =
-                    (List<Map<String,Object>>) lastItin.get("segments");
-            if (lastSegs != null && !lastSegs.isEmpty()) {
-                Map<String,Object> arr = (Map<String,Object>) lastSegs.get(lastSegs.size() - 1).get("arrival");
-                if (arr != null) {
-                    dto.setArrivalAirport((String) arr.get("iataCode"));
-                }
-            }
         }
 
-        return dto;
+        return slimDto;
     }
 }

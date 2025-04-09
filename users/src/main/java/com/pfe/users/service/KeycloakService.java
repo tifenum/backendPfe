@@ -1,15 +1,18 @@
 package com.pfe.users.service;
 
+import com.pfe.users.DTO.ClientUserDTO;
 import com.pfe.users.user.User;
 import com.pfe.users.DTO.TokenResponse;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -39,23 +42,43 @@ public class KeycloakService {
     }
 
     public Mono<Void> registerUser(User user) {
-        var keycloakUserPayload = Map.of(
+        var payload = Map.of(
                 "username", user.getEmail(),
-                "email", user.getEmail(),
-                "enabled", true,
-                "credentials", new Object[] {
-                        Map.of("type", "password", "value", user.getPassword(), "temporary", false)
+                "email",    user.getEmail(),
+                "enabled",  true,
+                "credentials", new Object[]{
+                        Map.of("type","password",
+                                "value",user.getPassword(),
+                                "temporary",false)
                 }
         );
 
         return webClient.post()
                 .uri(keycloakServerUrl + "/admin/realms/" + realm + "/users")
-                .header("Authorization", "Bearer " + adminToken)
+                .header("Authorization","Bearer " + adminToken)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(BodyInserters.fromValue(keycloakUserPayload))
-                .retrieve()
-                .bodyToMono(Void.class);
+                .body(BodyInserters.fromValue(payload))
+                .exchangeToMono(response -> {
+                    if (response.statusCode().equals(HttpStatus.CREATED)) {
+                        // 1) Grab the userId
+                        String location = response.headers()
+                                .asHttpHeaders()
+                                .getFirst("Location");
+                        String userId = location.substring(location.lastIndexOf('/') + 1);
+                        // 2) Assign the realm role
+                        return assignRoleToUser(userId, "client");
+                    } else if (response.statusCode().equals(HttpStatus.CONFLICT)) {
+                        // user already exists
+                        return Mono.error(new IllegalStateException("User already exists"));
+                    } else {
+                        // some other error
+                        return response.createException()
+                                .flatMap(Mono::error);
+                    }
+                });
     }
+
+
 
     public Mono<TokenResponse> loginUser(String username, String password) {
         return webClient.post()
@@ -90,6 +113,55 @@ public class KeycloakService {
                 .retrieve()
                 .bodyToMono(TokenResponse.class);
     }
+    private Mono<String> findUserIdByEmail(String email) {
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path(keycloakServerUrl + "/admin/realms/" + realm + "/users")
+                        .queryParam("email", email)
+                        .build())
+                .header("Authorization", "Bearer " + adminToken)
+                .retrieve()
+                .bodyToMono(User[].class)
+                .map(users -> users.length > 0 ? users[0].getId() : null);
+    }
 
+    private Mono<Void> assignRoleToUser(String userId, String roleName) {
+        return webClient.get()
+                .uri(keycloakServerUrl + "/admin/realms/" + realm + "/roles/" + roleName)
+                .header("Authorization", "Bearer " + adminToken)
+                .retrieve()
+                .bodyToMono(Map.class)
+                .flatMap(role -> webClient.post()
+                        .uri(keycloakServerUrl + "/admin/realms/" + realm + "/users/" + userId + "/role-mappings/realm")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .bodyValue(List.of(role))
+                        .retrieve()
+                        .bodyToMono(Void.class));
+    }
+    public Mono<List<ClientUserDTO>> getAllClients() {
+        // Step 1: Get all users
+        return webClient.get()
+                .uri(keycloakServerUrl + "/admin/realms/" + realm + "/users")
+                .header("Authorization", "Bearer " + adminToken)
+                .retrieve()
+                .bodyToFlux(Map.class)
+                .filterWhen(user -> {
+                    String userId = (String) user.get("id");
+                    // Step 2: Check if user has 'client' role
+                    return webClient.get()
+                            .uri(keycloakServerUrl + "/admin/realms/" + realm + "/users/" + userId + "/role-mappings/realm")
+                            .header("Authorization", "Bearer " + adminToken)
+                            .retrieve()
+                            .bodyToFlux(Map.class)
+                            .any(role -> "client".equals(role.get("name")));
+                })
+                .map(user -> new ClientUserDTO(
+                        (String) user.get("id"),
+                        (String) user.get("username"),
+                        (String) user.get("email")
+                ))
+                .collectList();
+    }
 
 }

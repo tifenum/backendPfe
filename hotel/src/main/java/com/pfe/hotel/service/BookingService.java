@@ -7,7 +7,6 @@ import com.pfe.hotel.DTO.BookingRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,8 +21,8 @@ public class BookingService {
     }
 
     public Booking createBookingFromRequest(BookingRequest bookingRequest) {
-        LocalDate checkInDate = LocalDate.parse(bookingRequest.getCheckInDate());
-        LocalDate checkOutDate = LocalDate.parse(bookingRequest.getCheckOutDate());
+        String checkInDate = bookingRequest.getCheckInDate();
+        String checkOutDate = bookingRequest.getCheckOutDate();
 
         Booking booking = new Booking(
                 bookingRequest.getUserId(),
@@ -49,6 +48,7 @@ public class BookingService {
 
         return reservations.stream()
                 .map(reservation -> new BookingResponseDTO(
+                        reservation.getId(),
                         reservation.getHotelName(),
                         reservation.getHotelAddress(),
                         reservation.getRoomType(),
@@ -62,4 +62,56 @@ public class BookingService {
                 ))
                 .collect(Collectors.toList());
     }
+    public BookingResponseDTO updateReservationStatus(String reservationId, String newStatus) {
+        // Validate the status
+        if (!"Accepted".equals(newStatus) && !"Refused".equals(newStatus)) {
+            throw new IllegalArgumentException("Invalid status: " + newStatus);
+        }
+
+        // Find the reservation
+        Booking reservation = bookingDao.findById(reservationId);
+        if (reservation == null) {
+            return null; // Could throw an exception instead if that’s your style
+        }
+
+        // Update the status
+        reservation.setReservationStatus(newStatus);
+        Booking updatedBooking = bookingDao.save(reservation);
+
+        // Return the DTO
+        return new BookingResponseDTO(
+                updatedBooking.getId(),
+                updatedBooking.getHotelName(),
+                updatedBooking.getHotelAddress(),
+                updatedBooking.getRoomType(),
+                updatedBooking.getRoomFeatures(),
+                updatedBooking.getRoomPricePerNight(),
+                updatedBooking.getCheckInDate(),
+                updatedBooking.getCheckOutDate(),
+                updatedBooking.getNotes(),
+                updatedBooking.getTotalPrice(),
+                updatedBooking.getReservationStatus()
+        );
+    }
+    // BookingService.java
+    public List<BookingResponseDTO> getPendingReservations() {
+        List<Booking> reservations = bookingDao.findByReservationStatus("Pending");
+
+        return reservations.stream()
+                .map(res -> new BookingResponseDTO(
+                        res.getId(),
+                        res.getHotelName(),
+                        res.getHotelAddress(),
+                        res.getRoomType(),
+                        res.getRoomFeatures(),
+                        res.getRoomPricePerNight(),
+                        res.getCheckInDate(),
+                        res.getCheckOutDate(),
+                        res.getNotes(),
+                        res.getTotalPrice(),
+                        res.getReservationStatus()
+                ))
+                .collect(Collectors.toList());
+    }
+
 }

@@ -7,4 +7,6 @@ import java.util.List;
 public interface BookingDao {
     Booking save(Booking booking);
     List<Booking> findByUserId(String userId);
+    List<Booking> findByReservationStatus(String reservationStatus); // 👈 Add this
+    Booking findById(String id); // Added
 }

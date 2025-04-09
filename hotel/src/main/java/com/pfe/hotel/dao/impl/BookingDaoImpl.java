@@ -23,4 +23,12 @@ public class BookingDaoImpl implements BookingDao {
     public List<Booking> findByUserId(String userId) {
         return bookingRepository.findByUserId(userId);
     }
+    @Override
+    public List<Booking> findByReservationStatus(String status) {
+        return bookingRepository.findByReservationStatus(status);
+    }
+    @Override
+    public Booking findById(String id) {
+        return bookingRepository.findById(id).orElse(null);
+    }
 }

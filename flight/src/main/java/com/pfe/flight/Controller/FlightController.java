@@ -37,6 +37,7 @@ public class FlightController {
                                 .body(new FlightBooking()))
                 );
     }
+
     @GetMapping("/search")
     public Mono<List<Map<String, Object>>> searchFlights(
             @RequestParam String origin,
@@ -50,5 +51,21 @@ public class FlightController {
         return flightService.getBookingsByUserId(userId)
                 .collectList();
     }
+    @GetMapping("/all-bookings")
+    public Mono<List<SlimFlightBookingDto>> getPendingBookings() {
+        return flightService.getPendingBookings().collectList();
+    }
 
+    @PutMapping("/bookings/{bookingId}/status")
+    public Mono<ResponseEntity<SlimFlightBookingDto>> updateBookingStatus(
+            @PathVariable String bookingId,
+            @RequestBody Map<String, String> request) {
+        String newStatus = request.get("status");
+        if (!"Accepted".equals(newStatus) && !"Refused".equals(newStatus)) {
+            return Mono.just(ResponseEntity.badRequest().build());
+        }
+        return flightService.updateBookingStatus(bookingId, newStatus)
+                .map(ResponseEntity::ok)
+                .defaultIfEmpty(ResponseEntity.notFound().build());
+    }
 }
