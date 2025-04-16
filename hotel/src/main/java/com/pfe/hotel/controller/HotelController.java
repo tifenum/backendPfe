@@ -1,5 +1,4 @@
 package com.pfe.hotel.controller;
-
 import com.pfe.hotel.DTO.BookingRequest;
 import com.pfe.hotel.DTO.BookingResponseDTO;
 import com.pfe.hotel.service.AmadeusService;
@@ -7,7 +6,6 @@ import com.pfe.hotel.service.BookingService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.pfe.hotel.service.HotelFakerService;
-import com.pfe.hotel.dao.repository.BookingRepository;
 import com.pfe.hotel.dao.entity.Booking;
 import java.util.List;
 import java.util.Locale;
@@ -95,12 +93,11 @@ public class HotelController {
         List<BookingResponseDTO> bookingResponseDTOList = bookingService.getReservationsByUserId(userId);
 
         if (bookingResponseDTOList.isEmpty()) {
-            return ResponseEntity.noContent().build(); // No reservations found
+            return ResponseEntity.noContent().build();
         }
 
-        return ResponseEntity.ok(bookingResponseDTOList); // Return the DTO list in the response
+        return ResponseEntity.ok(bookingResponseDTOList);
     }
-    // HotelController.java
     @GetMapping("/all-reservations")
     public ResponseEntity<List<BookingResponseDTO>> getAllPendingReservations() {
         List<BookingResponseDTO> pendingReservations = bookingService.getPendingReservations();
@@ -123,7 +120,7 @@ public class HotelController {
             }
             return ResponseEntity.ok(updatedDto);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(null); // Could add a custom error message if you like
+            return ResponseEntity.badRequest().body(null);
         }
     }
 }

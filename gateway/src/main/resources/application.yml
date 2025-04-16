@@ -18,9 +18,38 @@ spring:
           uri: http://localhost:8060
           predicates:
             - Path=/api/hotels/**
+  security:
+    oauth2:
+      resource server:
+        jwt:
+          issuer-uri: http://localhost:8080/realms/bookingPlatform
+          jwk-set-uri: http://localhost:8080/realms/bookingPlatform/protocol/openid-connect/certs
+          audiences: spring-boot-client
+      client:
+        registration:
+          keycloak:
+            client-id: spring-boot-client
+            client-secret: EfEBkyX2BW2Jf0RtTdGL3e6cxMiaDGpV
+            scope: openid, profile, email
+            authorization-grant-type: authorization_code
+            redirect-uri: http://localhost:8090/login/oauth2/code/keycloak
+        provider:
+          keycloak:
+            authorization-uri: http://localhost:8080/realms/bookingPlatform/protocol/openid-connect/auth
+            token-uri: http://localhost:8080/realms/bookingPlatform/protocol/openid-connect/token
+            user-info-uri: http://localhost:8080/realms/bookingPlatform/protocol/openid-connect/userinfo
+            jwk-set-uri: http://localhost:8080/realms/bookingPlatform/protocol/openid-connect/certs
 logging:
   level:
     org.springframework.cloud.gateway: DEBUG
     org.springframework.security: DEBUG
     reactor.netty.http.client: DEBUG
 
+keycloak:
+  server-url: http://localhost:8080
+  realm: bookingPlatform
+  public-client: true
+  bearer-only: true
+  client-id: spring-boot-client
+  client-secret: EfEBkyX2BW2Jf0RtTdGL3e6cxMiaDGpV
+  admin-token: eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJxelhVclR0WElCaDlmYWRKS2xkcGF0RDVHR3pkUjQ0LTY4c1VLaklPWE0wIn0.eyJleHAiOjE3NDQ2NDA5NjgsImlhdCI6MTc0NDYzOTE2OCwianRpIjoiZWNkYThlN2QtYjRmNy00OTUyLWEwMTgtYjA4NGEwZTg0MzVhIiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4MDgwL3JlYWxtcy9tYXN0ZXIiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJhZG1pbi1jbGkiLCJzaWQiOiJhNzhhNWIxNy00MTZlLTRhN2UtOGJmOS0zNzhjMjhiMjYwNmYiLCJzY29wZSI6ImVtYWlsIHByb2ZpbGUifQ.u-7OByhaidTYXCoibTD9QAwzAr0E18b45mYca3ROgHiZ-ehMH3eBaAz4zN_-bX4uaNjEB2_l-idAeD-KDAZLz2qa5dCsLtJtkQTtDOIVIeWqt3FE2qvrUYPx1StNpEdeh3I39FBpxZbZb4gJwvliVaaF-IwDXzd5IsWirMe7FxlKwwcmkruqilz9nECovURbDkZ1awnmpS_z_U1NxGlxk72pFHwv75-axnkeTGGjaOYfKO3P6g88EugZDNW5JfcQHy0ZjbKSd3p5DziZyCghpXEboIK383Sq-PePCPpvOEvrvy6DjrnTr7BE2C48kvKt3HIVzAHMSvKYNiENmUU5EA

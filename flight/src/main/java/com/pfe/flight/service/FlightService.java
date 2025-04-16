@@ -36,7 +36,7 @@ public class FlightService {
     private final BookingDao bookingDao;
 
     private final FlightBookingMapper flightBookingMapper;
-    public FlightService(Amadeus amadeus, ObjectMapper objectMapper, ObjectMapper objectMapper1, BookingDao bookingDao, FlightBookingMapper flightBookingMapper) {
+    public FlightService(Amadeus amadeus, ObjectMapper objectMapper1, BookingDao bookingDao, FlightBookingMapper flightBookingMapper) {
         this.amadeus = amadeus;
         this.objectMapper = objectMapper1;
         this.bookingDao = bookingDao;
@@ -47,13 +47,25 @@ public class FlightService {
 
 
     public Mono<FlightBooking> bookFlight(FlightBookingRequestDto requestDto) {
-        FlightBooking flightBooking = flightBookingMapper.toEntity(requestDto);
-        return bookingDao.save(flightBooking);
+        try {
+            FlightBooking flightBooking = flightBookingMapper.toEntity(requestDto);
+            return bookingDao.save(flightBooking);
+        } catch (Exception e) {
+            return Mono.error(e);
+        }
     }
-    public Mono<SlimFlightBookingDto> updateBookingStatus(String bookingId, String newStatus) {
+
+
+    public Mono<SlimFlightBookingDto> updateBookingStatus(String bookingId, Map<String, String> request) {
+        String newStatus = request.get("status");
+        if (!"Accepted".equals(newStatus) && !"Refused".equals(newStatus)) {
+            return Mono.error(new IllegalArgumentException("Status must be either 'Accepted' or 'Refused'."));
+        }
+
         return bookingDao.updateBookingStatus(bookingId, newStatus)
                 .map(flightBookingMapper::mapToSlimDto);
     }
+
 
     public Mono<List<Map<String, Object>>> searchFlights(String origin, String destination, String departureDate, int adults) {
         return Mono.fromCallable(() -> {

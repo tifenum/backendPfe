@@ -43,7 +43,7 @@ public class BookingService {
         List<Booking> reservations = bookingDao.findByUserId(userId);
 
         if (reservations.isEmpty()) {
-            return List.of(); // Return an empty list if no reservations found
+            return List.of();
         }
 
         return reservations.stream()
@@ -63,22 +63,18 @@ public class BookingService {
                 .collect(Collectors.toList());
     }
     public BookingResponseDTO updateReservationStatus(String reservationId, String newStatus) {
-        // Validate the status
         if (!"Accepted".equals(newStatus) && !"Refused".equals(newStatus)) {
             throw new IllegalArgumentException("Invalid status: " + newStatus);
         }
 
-        // Find the reservation
         Booking reservation = bookingDao.findById(reservationId);
         if (reservation == null) {
-            return null; // Could throw an exception instead if that’s your style
+            return null;
         }
 
-        // Update the status
         reservation.setReservationStatus(newStatus);
         Booking updatedBooking = bookingDao.save(reservation);
 
-        // Return the DTO
         return new BookingResponseDTO(
                 updatedBooking.getId(),
                 updatedBooking.getHotelName(),
@@ -93,7 +89,6 @@ public class BookingService {
                 updatedBooking.getReservationStatus()
         );
     }
-    // BookingService.java
     public List<BookingResponseDTO> getPendingReservations() {
         List<Booking> reservations = bookingDao.findByReservationStatus("Pending");
 

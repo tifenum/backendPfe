@@ -23,7 +23,7 @@ logging:
       springframework:
         web: DEBUG
         http: DEBUG
-        validation: TRACE  # For validation errors (e.g., @NotNull, @NotBlank)
+        validation: TRACE
     com:
       fasterxml:
-        jackson: TRACE  # For detailed Jackson deserialization errors
+        jackson: TRACE
