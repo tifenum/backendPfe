@@ -1,11 +1,11 @@
 package com.pfe.flight.Controller;
+
 import com.pfe.flight.DTO.FlightBookingRequestDto;
 import com.pfe.flight.DTO.SlimFlightBookingDto;
 import com.pfe.flight.dao.entity.FlightBooking;
 import com.pfe.flight.service.FlightService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Map;
@@ -21,37 +21,40 @@ public class FlightController {
     }
 
     @PostMapping("/book-flight")
-    public Mono<ResponseEntity<FlightBooking>> bookFlight(@RequestBody FlightBookingRequestDto request) {
-        return flightService.bookFlight(request)
-                .map(ResponseEntity::ok);
+    public ResponseEntity<FlightBooking> bookFlight(@RequestBody FlightBookingRequestDto request) {
+        FlightBooking booking = flightService.bookFlight(request);
+        return ResponseEntity.ok(booking);
     }
 
     @GetMapping("/search")
-    public Mono<List<Map<String, Object>>> searchFlights(
+    public List<Map<String, Object>> searchFlights(
             @RequestParam String origin,
             @RequestParam String destination,
             @RequestParam String departureDate,
             @RequestParam int adults) {
         return flightService.searchFlights(origin, destination, departureDate, adults);
     }
+
     @GetMapping("/bookings")
-    public Mono<List<SlimFlightBookingDto>> getBookings(@RequestParam String userId) {
-        return flightService.getBookingsByUserId(userId)
-                .collectList();
+    public List<SlimFlightBookingDto> getBookings(@RequestParam String userId) {
+        return flightService.getBookingsByUserId(userId);
     }
+
     @GetMapping("/all-bookings")
-    public Mono<List<SlimFlightBookingDto>> getPendingBookings() {
-        return flightService.getPendingBookings().collectList();
+    public List<SlimFlightBookingDto> getPendingBookings() {
+        return flightService.getPendingBookings();
     }
 
     @PutMapping("/bookings/{bookingId}/status")
-    public Mono<ResponseEntity<SlimFlightBookingDto>> updateBookingStatus(
+    public ResponseEntity<SlimFlightBookingDto> updateBookingStatus(
             @PathVariable String bookingId,
             @RequestBody Map<String, String> request) {
 
-        return flightService.updateBookingStatus(bookingId, request)
-                .map(ResponseEntity::ok)
-                .defaultIfEmpty(ResponseEntity.notFound().build());
+        SlimFlightBookingDto updatedBooking = flightService.updateBookingStatus(bookingId, request);
+        if (updatedBooking != null) {
+            return ResponseEntity.ok(updatedBooking);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
-
 }

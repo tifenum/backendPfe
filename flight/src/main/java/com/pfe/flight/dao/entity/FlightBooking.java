@@ -1,6 +1,5 @@
 package com.pfe.flight.dao.entity;
 
-import com.pfe.flight.DTO.FlightBookingRequestDto;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;

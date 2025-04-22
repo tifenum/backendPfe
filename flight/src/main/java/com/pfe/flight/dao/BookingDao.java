@@ -1,12 +1,13 @@
 package com.pfe.flight.dao;
 
 import com.pfe.flight.dao.entity.FlightBooking;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
+
+import java.util.List;
+import java.util.Optional;
 
 public interface BookingDao {
-    Mono<FlightBooking> save(FlightBooking booking);
-    Flux<FlightBooking> findByUserId(String userId);
-    Flux<FlightBooking> findByBookingStatus(String bookingStatus);
-    Mono<FlightBooking> updateBookingStatus(String bookingId, String newStatus);
+    FlightBooking save(FlightBooking booking);
+    List<FlightBooking> findByUserId(String userId);
+    List<FlightBooking> findByBookingStatus(String bookingStatus);
+    Optional<FlightBooking> updateBookingStatus(String bookingId, String newStatus);
 }

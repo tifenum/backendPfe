@@ -1,31 +1,7 @@
 spring:
   application:
     name: users
-  main:
-    web-application-type: reactive
-  security:
-    oauth2:
-      client:
-        registration:
-          keycloak:
-            client-id: spring-boot-client
-            client-secret: EfEBkyX2BW2Jf0RtTdGL3e6cxMiaDGpV
-            scope: openid, profile, email
-            authorization-grant-type: authorization_code
-            redirect-uri: http://localhost:8090/login/oauth2/code/keycloak
-          google:
-            client-id: 222513227035-8g18uspv7ptbdpjfjn7jplfmalle7hrm.apps.googleusercontent.com
-            clientSecret: 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
-        provider:
-          keycloak:
-            authorization-uri: http://localhost:8080/realms/bookingPlatform/protocol/openid-connect/auth
-            token-uri: http://localhost:8080/realms/bookingPlatform/protocol/openid-connect/token
-            user-info-uri: http://localhost:8080/realms/bookingPlatform/protocol/openid-connect/userinfo
-            jwk-set-uri: http://localhost:8080/realms/bookingPlatform/protocol/openid-connect/certs
 
-  data:
-    mongodb:
-      uri: mongodb://localhost:27017/PFE
 
 server:
   port: 8090
