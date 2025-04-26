@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/users")
@@ -26,7 +27,7 @@ public class AuthController {
     }
 
     @GetMapping("/ask")
-    public String askAssistant(@RequestParam String message, @RequestParam String sessionId) {
+    public Map<String, Object>  askAssistant(@RequestParam String message, @RequestParam String sessionId) {
         return chatbotService.askAssistant(message, sessionId);
     }
 }

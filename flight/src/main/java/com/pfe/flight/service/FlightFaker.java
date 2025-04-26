@@ -23,6 +23,7 @@ public class FlightFaker {
         return flightOffers;
     }
 
+
     private Map<String, Object> generateFlightOffer(
             String originLocationCode, String destinationLocationCode,
             String departureDate, String returnDate, int id) {

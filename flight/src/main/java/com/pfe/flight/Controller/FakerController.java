@@ -26,4 +26,14 @@ public class FakerController {
 
         return flightFaker.generateFakeFlightOffers(origin, destination, departureDate, returnDate, adults);
     }
+    @GetMapping("/faker")
+    public List<Map<String, Object>> getFlighterOffers(
+            @RequestParam String origin,
+            @RequestParam String destination,
+            @RequestParam String departureDate,
+            @RequestParam(defaultValue = "2029-8-12") String returnDate,
+            @RequestParam(defaultValue = "1") int adults) {
+
+        return flightFaker.generateFakeFlightOffers(origin, destination, departureDate, returnDate, adults);
+    }
 }
