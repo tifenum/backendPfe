@@ -3,7 +3,7 @@ spring:
     name: hotel
   data:
     mongodb:
-      uri: mongodb://localhost:27017/PFE
+      uri: mongodb+srv://hbib:Azerty%409911@cluster0.br7eade.mongodb.net/PFE?retryWrites=true&w=majority
   profiles:
     active: amadeus
 server:
