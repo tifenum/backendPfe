@@ -19,9 +19,31 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Build with Maven
-        run: mvn clean install -DskipTests
+      # Build Users JAR
+      - name: Build Users with Maven
+        run: |
+          cd users
+          mvn clean install -DskipTests
 
+      # Build Gateway JAR
+      - name: Build Gateway with Maven
+        run: |
+          cd gateway
+          mvn clean install -DskipTests
+
+      # Build Hotel JAR
+      - name: Build Hotel with Maven
+        run: |
+          cd hotel
+          mvn clean install -DskipTests
+
+      # Build Flight JAR
+      - name: Build Flight with Maven
+        run: |
+          cd flight
+          mvn clean install -DskipTests
+
+      # Deploy Users JAR
       - name: Deploy Users JAR
         uses: appleboy/scp-action@master
         with:
@@ -32,6 +54,7 @@ jobs:
           target: "/home/ubuntu/backendPfe/users/target"
           strip_components: 2
 
+      # Deploy Gateway JAR
       - name: Deploy Gateway JAR
         uses: appleboy/scp-action@master
         with:
@@ -42,6 +65,7 @@ jobs:
           target: "/home/ubuntu/backendPfe/gateway/target"
           strip_components: 2
 
+      # Deploy Hotel JAR
       - name: Deploy Hotel JAR
         uses: appleboy/scp-action@master
         with:
@@ -52,6 +76,7 @@ jobs:
           target: "/home/ubuntu/backendPfe/hotel/target"
           strip_components: 2
 
+      # Deploy Flight JAR
       - name: Deploy Flight JAR
         uses: appleboy/scp-action@master
         with:
@@ -62,6 +87,7 @@ jobs:
           target: "/home/ubuntu/backendPfe/flight/target"
           strip_components: 2
 
+      # Restart services
       - name: Restart services
         uses: appleboy/ssh-action@master
         with:
