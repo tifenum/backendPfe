@@ -15,7 +15,7 @@ public class GatewayCorsConfig {
         corsConfig.setAllowCredentials(true);
         corsConfig.addAllowedOrigin("http://localhost:3000");
         corsConfig.addAllowedOrigin("http://129.146.6.224:3000");
-        corsConfig.addAllowedOrigin("http://booking.medhabib.me"); // Add this
+        corsConfig.addAllowedOrigin("https://booking.medhabib.me"); // Add this
         corsConfig.addAllowedHeader("*");
         corsConfig.addAllowedMethod("GET");
         corsConfig.addAllowedMethod("POST");
