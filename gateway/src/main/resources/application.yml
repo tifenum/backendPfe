@@ -9,7 +9,7 @@ spring:
         - id: users
           uri: http://localhost:8090
           predicates:
-            - Path=/users/**
+            - Path=api/users/**
         - id: flight
           uri: http://localhost:8050
           predicates:
