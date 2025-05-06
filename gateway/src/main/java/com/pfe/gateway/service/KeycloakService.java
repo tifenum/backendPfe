@@ -101,7 +101,9 @@ public class KeycloakService {
     /**
      * Logs in a user by building a Keycloak instance using user credentials and retrieves an access token.
      */
+
     public Mono<ResponseEntity<TokenResponse>> loginUser(String username, String password) {
+        logger.debug("Attempting to obtain token for user={} from realm={}", username, realm);
         try {
             Keycloak keycloak = KeycloakBuilder.builder()
                     .serverUrl(keycloakServerUrl)
@@ -113,18 +115,21 @@ public class KeycloakService {
                     .grantType(OAuth2Constants.PASSWORD)
                     .build();
 
+            logger.debug("Calling Keycloak token endpoint at {}/realms/{}/protocol/openid-connect/token with clientId={}",
+                    keycloakServerUrl, realm, clientId);
+
             AccessTokenResponse tokenResponse = keycloak.tokenManager().getAccessToken();
             TokenResponse token = new TokenResponse();
             token.setAccess_token(tokenResponse.getToken());
             token.setRefresh_token(tokenResponse.getRefreshToken());
+
+            logger.debug("Received token for user={}: accessToken expires in {} seconds", username, tokenResponse.getExpiresIn());
             return Mono.just(ResponseEntity.ok(token));
         } catch (Exception e) {
-            return Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(null));
+            logger.error("Failed to login user={} in realm={}: {}", username, realm, e.getMessage(), e);
+            return Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null));
         }
     }
-
-
     public Mono<ResponseEntity<String>> logoutUser(JwtAuthenticationToken jwtAuth) {
         if (jwtAuth == null) {
             logger.warn("Invalid authentication: JWT token is null");
