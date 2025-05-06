@@ -1,6 +1,14 @@
+name: Deploy Backend Services
+
+# 1) Define when this should run (e.g. on push to main)
+on:
+  push:
+    branches:
+      - main
+
 jobs:
   deploy-backend:
-    name: Deploy Backend Services
+    name: SSH & Redeploy on VM
     runs-on: ubuntu-24.04
     steps:
       - name: SSH & deploy backend
@@ -10,26 +18,25 @@ jobs:
           port: 22
           username: ${{ secrets.VM_USERNAME }}
           key: ${{ secrets.VM_SSH_KEY }}
-          # allocate a tty so sudo works
           request_pty: true
           script: |
             set -e
             cd ~/backendPfe
-            
-            echo "Pulling latest code…"
+
+            echo "📦 Pulling latest code…"
             git pull origin main
-            
+
             for svc in users flight hotel gateway; do
-              echo "Building $svc…"
+              echo "🔨 Building $svc…"
               cd $svc
               mvn clean package -DskipTests
               cd ..
             done
-            
-            echo "Restarting services…"
+
+            echo "🔄 Restarting services…"
             sudo systemctl restart users
             sudo systemctl restart flight
             sudo systemctl restart hotel
             sudo systemctl restart gateway
-            
+
             echo "✅ Backend redeployed!"
