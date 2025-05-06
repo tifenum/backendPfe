@@ -1,30 +1,27 @@
-name: Deploy Backend Services
-
-# 1) Define when this should run (e.g. on push to main)
 on:
   push:
     branches:
-      - master
+      - master    # trigger workflow on pushes to master
 
 jobs:
   deploy-backend:
-    name: SSH & Redeploy on VM
     runs-on: ubuntu-24.04
     steps:
       - name: SSH & deploy backend
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VM_HOST }}
-          port: 22
           username: ${{ secrets.VM_USERNAME }}
           key: ${{ secrets.VM_SSH_KEY }}
+          port: 22
           request_pty: true
           script: |
             set -e
             cd ~/backendPfe
 
-            echo "📦 Pulling latest code…"
-            git pull origin main
+            echo "📦 Pulling latest code from master…"
+            git fetch origin master
+            git reset --hard origin/master
 
             for svc in users flight hotel gateway; do
               echo "🔨 Building $svc…"
