@@ -17,7 +17,8 @@ keycloak:
 
 gemini:
   api-key: AIzaSyCT0ZG6BuywklvKuEaPTG1m9K9cxKjNlq4
-
+mongodb:
+  uri: mongodb+srv://hbib:Azerty%409911@cluster0.br7eade.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
 logging:
   level:
     org:

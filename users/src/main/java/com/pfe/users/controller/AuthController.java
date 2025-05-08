@@ -25,9 +25,12 @@ public class AuthController {
     public ResponseEntity<List<ClientUserDTO>> getAllClients() {
         return keycloakService.getAllClients();
     }
-
     @GetMapping("/ask")
-    public Map<String, Object>  askAssistant(@RequestParam String message, @RequestParam String sessionId) {
-        return chatbotService.askAssistant(message, sessionId);
+    public Map<String, Object> askAssistant(
+            @RequestParam String message,
+            @RequestParam String sessionId,
+            @RequestParam(required = false) String userId // Dynamic userId parameter
+    ) {
+        return chatbotService.askAssistant(message, sessionId, userId);
     }
 }
