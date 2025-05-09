@@ -31,4 +31,9 @@ public class BookingDaoImpl implements BookingDao {
     public Booking findById(String id) {
         return bookingRepository.findById(id).orElse(null);
     }
+
+    @Override
+    public void deleteById(String id) {
+        bookingRepository.deleteById(id);
+    }
 }

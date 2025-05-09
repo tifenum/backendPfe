@@ -123,4 +123,13 @@ public class HotelController {
             return ResponseEntity.badRequest().body(null);
         }
     }
+    @DeleteMapping("/reservations/{reservationId}")
+    public ResponseEntity<Void> deleteReservation(@PathVariable String reservationId) {
+        try {
+            bookingService.deleteBooking(reservationId);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }

@@ -16,6 +16,10 @@ public class BookingDaoImpl implements BookingDao {
     public BookingDaoImpl(flightBookingRepository FlightBookingRepository) {
         this.FlightBookingRepository = FlightBookingRepository; // Inject repository through constructor
     }
+    @Override
+    public FlightBooking findById(String id) {
+        return FlightBookingRepository.findById(id).orElse(null);
+    }
 
     @Override
     public FlightBooking save(FlightBooking booking) {
@@ -36,5 +40,9 @@ public class BookingDaoImpl implements BookingDao {
                     booking.setBookingStatus(newStatus);
                     return FlightBookingRepository.save(booking); // returns FlightBooking
                 });
+    }
+    @Override
+    public void deleteById(String bookingId) {
+        FlightBookingRepository.deleteById(bookingId);
     }
 }

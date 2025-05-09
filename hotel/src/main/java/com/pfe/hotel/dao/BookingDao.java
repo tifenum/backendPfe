@@ -9,4 +9,6 @@ public interface BookingDao {
     List<Booking> findByUserId(String userId);
     List<Booking> findByReservationStatus(String reservationStatus); // 👈 Add this
     Booking findById(String id); // Added
+    void deleteById(String id); // Added for deletion
+
 }

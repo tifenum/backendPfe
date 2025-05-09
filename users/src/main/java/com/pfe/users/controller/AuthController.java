@@ -33,4 +33,8 @@ public class AuthController {
     ) {
         return chatbotService.askAssistant(message, sessionId, userId);
     }
+    @DeleteMapping("/{userId}")
+    public ResponseEntity<Void> deleteUser(@PathVariable String userId) {
+        return keycloakService.deleteUser(userId);
+    }
 }

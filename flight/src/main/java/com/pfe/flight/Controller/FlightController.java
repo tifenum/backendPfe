@@ -57,4 +57,13 @@ public class FlightController {
             return ResponseEntity.notFound().build();
         }
     }
+    @DeleteMapping("/bookings/{bookingId}")
+    public ResponseEntity<Void> deleteBooking(@PathVariable String bookingId) {
+        try {
+            flightService.deleteBooking(bookingId);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }

@@ -90,4 +90,11 @@ public class FlightService {
                 .map(flightBookingMapper::mapToSlimDto)
                 .collect(Collectors.toList());
     }
+    public void deleteBooking(String bookingId) {
+        Optional<FlightBooking> booking = Optional.ofNullable(bookingDao.findById(bookingId));
+        if (booking.isEmpty()) {
+            throw new IllegalArgumentException("Booking not found: " + bookingId);
+        }
+        bookingDao.deleteById(bookingId);
+    }
 }

@@ -108,5 +108,11 @@ public class BookingService {
                 ))
                 .collect(Collectors.toList());
     }
-
+    public void deleteBooking(String reservationId) {
+        Booking reservation = bookingDao.findById(reservationId);
+        if (reservation == null) {
+            throw new IllegalArgumentException("Reservation not found: " + reservationId);
+        }
+        bookingDao.deleteById(reservationId);
+    }
 }
