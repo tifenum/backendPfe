@@ -18,6 +18,8 @@ public class FlightBooking {
     @Data
     public static class FlightDetails {
         private boolean oneWay;
+        private String tripType; // "One Way" or "Round Trip"
+        private String returnDate; // ISO date (e.g., "2025-05-20")
         private List<List<Seat>> seatMap;
         private String price;
         private List<Itinerary> itineraries;

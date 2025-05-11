@@ -26,14 +26,7 @@ public class FlightController {
         return ResponseEntity.ok(booking);
     }
 
-    @GetMapping("/search")
-    public List<Map<String, Object>> searchFlights(
-            @RequestParam String origin,
-            @RequestParam String destination,
-            @RequestParam String departureDate,
-            @RequestParam int adults) {
-        return flightService.searchFlights(origin, destination, departureDate, adults);
-    }
+
 
     @GetMapping("/bookings")
     public List<SlimFlightBookingDto> getBookings(@RequestParam String userId) {

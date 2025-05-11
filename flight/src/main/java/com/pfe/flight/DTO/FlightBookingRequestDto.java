@@ -14,6 +14,8 @@ public class FlightBookingRequestDto {
     @Data
     public static class FlightDetails {
         private boolean oneWay;
+        private String tripType; // "One Way" or "Round Trip"
+        private String returnDate; // ISO date (e.g., "2025-05-20")
         private List<List<SeatDTO>> seatMap;
         private String price;
         private List<ItineraryDTO> itineraries;
@@ -21,7 +23,6 @@ public class FlightBookingRequestDto {
         private String airlineCodes;
         private int id;
         private SeatDTO selectedSeat;
-
     }
 
     @Data
@@ -51,8 +52,6 @@ public class FlightBookingRequestDto {
         private boolean reserved;
         @JsonProperty("class")
         private String seatClass;
-
-        // New property to capture extra cost for the selected seat
         private Double extraCost;
     }
 }

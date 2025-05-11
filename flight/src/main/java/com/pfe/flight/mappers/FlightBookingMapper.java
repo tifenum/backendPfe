@@ -23,6 +23,8 @@ public class FlightBookingMapper {
     private FlightBooking.FlightDetails mapFlightDetails(FlightBookingRequestDto.FlightDetails dtoDetails) {
         FlightBooking.FlightDetails details = new FlightBooking.FlightDetails();
         details.setOneWay(dtoDetails.isOneWay());
+        details.setTripType(dtoDetails.getTripType());
+        details.setReturnDate(dtoDetails.getReturnDate());
         details.setPrice(dtoDetails.getPrice());
         details.setAirlineCodes(dtoDetails.getAirlineCodes());
         details.setFlightId(dtoDetails.getId());
@@ -52,7 +54,6 @@ public class FlightBookingMapper {
         seat.setId(dto.getId());
         seat.setReserved(dto.isReserved());
         seat.setSeatClass(dto.getSeatClass());
-        // Map the extraCost if provided (will be null for non-selected seats)
         seat.setExtraCost(dto.getExtraCost());
         return seat;
     }
@@ -91,13 +92,14 @@ public class FlightBookingMapper {
         if (flightBooking.getFlightDetails() != null) {
             FlightBooking.FlightDetails details = flightBooking.getFlightDetails();
 
-            // Map trip type: One Way or Round Trip
-            slimDto.setTripType(details.isOneWay() ? "One Way" : "Round Trip");
+            // Map trip type and return date
+            slimDto.setTripType(details.getTripType());
+            slimDto.setReturnDate(details.getReturnDate());
 
-            // Map total price (assuming the price is a string, as per the entity)
+            // Map total price
             slimDto.setTotalPrice(details.getPrice());
 
-            // Map departure airport and departure time from the first itinerary's first segment, if available
+            // Map departure airport and departure time from the first itinerary's first segment
             if (details.getItineraries() != null && !details.getItineraries().isEmpty()) {
                 FlightBooking.Itinerary firstItinerary = details.getItineraries().get(0);
                 if (firstItinerary.getSegments() != null && !firstItinerary.getSegments().isEmpty()) {
@@ -108,7 +110,7 @@ public class FlightBookingMapper {
                     }
                 }
 
-                // Map arrival airport from the last itinerary's last segment, if available
+                // Map arrival airport from the last itinerary's last segment
                 FlightBooking.Itinerary lastItinerary = details.getItineraries().get(details.getItineraries().size() - 1);
                 if (lastItinerary.getSegments() != null && !lastItinerary.getSegments().isEmpty()) {
                     FlightBooking.Segment lastSegment = lastItinerary.getSegments().get(lastItinerary.getSegments().size() - 1);

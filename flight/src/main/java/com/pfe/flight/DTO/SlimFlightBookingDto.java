@@ -13,4 +13,5 @@ public class SlimFlightBookingDto {
     private String tripType;
     private String totalPrice;
     private String bookingStatus;
+    private String returnDate;
 }

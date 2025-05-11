@@ -8,12 +8,12 @@ import java.util.Map;
 
 @FeignClient(name = "flight", url = "http://localhost:8222/api/flights")
 public interface FlightServiceClient {
-    @GetMapping("/faker")
+    @GetMapping("/fake")
     List<Map<String, Object>> getFakeFlightOffers(
             @RequestParam("origin") String origin,
             @RequestParam("destination") String destination,
             @RequestParam("departureDate") String departureDate,
             @RequestParam(value = "returnDate", required = false) String returnDate,
-            @RequestParam(value = "adults", defaultValue = "1") int adults
+            @RequestParam(value = "flightType") String flightType // Added flightType
     );
 }

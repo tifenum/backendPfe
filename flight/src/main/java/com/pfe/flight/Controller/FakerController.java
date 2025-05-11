@@ -17,23 +17,13 @@ public class FakerController {
     }
 
     @GetMapping("/fake")
-    public List<Map<String, Object>> getFlightOffers(
-            @RequestParam String origin,
-            @RequestParam String destination,
-            @RequestParam String departureDate,
-            @RequestParam String returnDate,
-            @RequestParam(defaultValue = "1") int adults) {
-
-        return flightFaker.generateFakeFlightOffers(origin, destination, departureDate, returnDate, adults);
-    }
-    @GetMapping("/faker")
     public List<Map<String, Object>> getFlighterOffers(
             @RequestParam String origin,
             @RequestParam String destination,
-            @RequestParam String departureDate,
-            @RequestParam(defaultValue = "2029-8-12") String returnDate,
-            @RequestParam(defaultValue = "1") int adults) {
-
-        return flightFaker.generateFakeFlightOffers(origin, destination, departureDate, returnDate, adults);
+            @RequestParam(required = false) String departureDate,
+            @RequestParam(required = false) String returnDate,
+            @RequestParam(defaultValue = "round-trip") String flightType,
+            @RequestParam(required = false) String airlineCode) {
+        return flightFaker.generateFakeFlightOffers(origin, destination, departureDate, returnDate, flightType, airlineCode);
     }
 }

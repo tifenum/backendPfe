@@ -13,6 +13,8 @@ import com.pfe.flight.dao.entity.FlightBooking;
 import com.pfe.flight.mappers.FlightBookingMapper;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -26,11 +28,13 @@ public class FlightService {
     private final Gson gson;
     private final BookingDao bookingDao;
     private final FlightBookingMapper flightBookingMapper;
+    private final FlightFaker flightFaker;
 
-    public FlightService(Amadeus amadeus, BookingDao bookingDao, FlightBookingMapper flightBookingMapper) {
+    public FlightService(Amadeus amadeus, BookingDao bookingDao, FlightBookingMapper flightBookingMapper, FlightFaker flightFaker) {
         this.amadeus = amadeus;
         this.bookingDao = bookingDao;
         this.flightBookingMapper = flightBookingMapper;
+        this.flightFaker = flightFaker;
         this.gson = new Gson();
     }
 
@@ -50,31 +54,14 @@ public class FlightService {
                 .orElse(null);
     }
 
-    public List<Map<String, Object>> searchFlights(String origin, String destination, String departureDate, int adults) {
-        try {
-            FlightOfferSearch[] offers = amadeus.shopping.flightOffersSearch.get(Params
-                    .with("originLocationCode", origin)
-                    .and("destinationLocationCode", destination)
-                    .and("departureDate", departureDate)
-                    .and("adults", adults)
-                    .and("max", 3));
+    public List<Map<String, Object>> searchFlights(String origin, String destination, String departureDate, String returnDate, String flightType) {
+        // Default departureDate to today + 7 days if not provided
+        String effectiveDepartureDate = departureDate != null && !departureDate.isEmpty()
+                ? departureDate
+                : LocalDate.now().plusDays(7).format(DateTimeFormatter.ISO_LOCAL_DATE);
 
-            return Arrays.stream(offers)
-                    .map(offer -> {
-                        String json = gson.toJson(offer);
-                        Map<String, Object> map = gson.fromJson(json, new TypeToken<Map<String, Object>>(){}.getType());
-                        if (map.containsKey("response") && map.get("response") instanceof List) {
-                            List<?> responseList = (List<?>) map.get("response");
-                            if (!responseList.isEmpty()) {
-                                map.put("response", responseList.get(0));
-                            }
-                        }
-                        return map;
-                    })
-                    .collect(Collectors.toList());
-        } catch (ResponseException e) {
-            throw new RuntimeException("Flight search failed: " + e.getDescription(), e);
-        }
+        // Use FlightFaker for fake data (remove Amadeus for now, as per your setup)
+        return flightFaker.generateFakeFlightOffers(origin, destination, effectiveDepartureDate, returnDate, flightType, "");
     }
 
     public List<SlimFlightBookingDto> getBookingsByUserId(String userId) {
@@ -90,6 +77,7 @@ public class FlightService {
                 .map(flightBookingMapper::mapToSlimDto)
                 .collect(Collectors.toList());
     }
+
     public void deleteBooking(String bookingId) {
         Optional<FlightBooking> booking = Optional.ofNullable(bookingDao.findById(bookingId));
         if (booking.isEmpty()) {

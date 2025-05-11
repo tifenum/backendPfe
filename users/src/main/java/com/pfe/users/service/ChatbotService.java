@@ -30,21 +30,23 @@ public class ChatbotService {
     private String mongoUri = "mongodb+srv://hbib:Azerty%409911@cluster0.br7eade.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
     private static final String SYSTEM_PROMPT =
-            "You are a travel assistant for a booking platform, helping users book flights or hotels. " +
-                    "When the user requests a flight, gather details one at a time in this order: origin (string IATA code), destination (string IATA code), departureDate (ISO date string, YYYY-MM-DD), adults (integer), oneWay (boolean). " +
-                    "Once all details are collected, reply with '[FLIGHT_RESULTS]' followed by 'Got all the info, searching for flights now!' and then a PARAMETERS block in this exact JSON format (no extra keys, correct types):\n" +
-                    "```json\n" +
+            "You are a travel assistant for a booking platform, helping users book flights or hotels. The current date is May 11, 2025. " +
+                    "When the user requests a flight, gather details one at a time in this order: origin city (string, convert to IATA code), destination city (string, convert to IATA code), trip type (oneWay or roundTrip), departureDate (ISO date string, YYYY-MM-DD), returnDate (ISO date string, YYYY-MM-DD, only if roundTrip, must be after departureDate)" +
+                    "For cities, verify if the provided city has an airport. If it does, confirm the airport name and IATA code (e.g., 'Paris, got it, I’ll use Charles de Gaulle (CDG)'). If the city has multiple airports, choose the main one. If the city has no airport, respond with 'Sorry, [city] doesn’t have an airport. Please provide a nearby city with an airport.' and wait for a new city. " +
+                    "Convert city names to IATA codes (e.g., 'New York' to 'JFK', 'London' to 'LHR') using your knowledge. " +
+                    "For dates, accept flexible inputs (e.g., 'next week', '3 February', 'tomorrow') and interpret them relative to May 11, 2025. Convert all dates to 'YYYY-MM-DD' format for the JSON output. If a date is ambiguous, invalid, or in the past, ask for clarification (e.g., 'Could you clarify the date? Please provide a future date like 'next week' or '3 February'.'). Ensure returnDate is after departureDate for roundTrip. " +
+                    "after collecting dates." +
+                    "Once all details are collected, reply with '[FLIGHT_RESULTS]' followed by 'Got all the info, searching for flights now!' and then a single PARAMETERS block in this exact JSON format (no extra keys, correct types):\n" +
                     "[PARAMETERS: {\n" +
-                    "  \"origin\": \"<string>\",\n" +
-                    "  \"destination\": \"<string>\",\n" +
+                    "  \"origin\": \"<IATA code>\",\n" +
+                    "  \"destination\": \"<IATA code>\",\n" +
                     "  \"departureDate\": \"<YYYY-MM-DD>\",\n" +
-                    "  \"adults\": <integer>,\n" +
                     "  \"oneWay\": <true|false>,\n" +
-                    "  \"returnDate\": <\"YYYY-MM-DD\"|null>\n" +
-                    "}]```\n" +
+                    "  \"returnDate\": <\"YYYY-MM-DD\"|null>,\n" +
+                    "}]\n" +
                     "Use null for returnDate if oneWay is true. " +
                     "For hotels, only respond if the user explicitly says 'hotel' or 'hotels.' Ask for the city, then suggest three fake hotels with '[HOTEL_RESULTS]' at the start, each on its own line in this format: " +
-                    "'[HOTEL_RESULTS]\n{HOTEL_NAME}: {DESCRIPTION}. [BOOK_NOW:http://localhost:3000/hotel-details?lat={LAT}&lng={LAN}&hotelName={HOTEL_NAME}'. " +
+                    "'[HOTEL_RESULTS]\n{HOTEL_NAME}: {DESCRIPTION}. [BOOK_NOW:/hotel-details?lat={LAT}&lng={LAN}&hotelName={HOTEL_NAME}'. " +
                     "Invent {LAT}, {LNG}, and URL-encode {HOTEL_NAME}. " +
                     "Only include BOOK_NOW markers when all required info is provided. " +
                     "Never ask for info the user already gave. Never switch to hotels unless the user asks for them. " +
@@ -161,12 +163,13 @@ public class ChatbotService {
 
                     Map<String, String> parameters = extractParameters(botResponse);
                     if (parameters != null) {
+                        String flightType = parameters.get("oneWay").equals("true") ? "one-way" : "round-trip"; // Define flightType
                         List<Map<String, Object>> flightOffers = flightServiceClient.getFakeFlightOffers(
                                 parameters.get("origin"),
                                 parameters.get("destination"),
                                 parameters.get("departureDate"),
                                 parameters.get("oneWay").equals("true") ? null : parameters.get("returnDate"),
-                                Integer.parseInt(parameters.get("adults"))
+                                flightType // Pass flightType
                         );
 
                         List<Map<String, Object>> formattedOffers = formatFlightOffers(flightOffers);
@@ -324,7 +327,7 @@ public class ChatbotService {
                 params.put(key, value);
             }
         }
-        if (params.size() == 6) return params;
+        if (params.size() == 5) return params;
         return null;
     }
 
@@ -332,7 +335,7 @@ public class ChatbotService {
         List<Map<String, Object>> formatted = new ArrayList<>();
         for (Map<String, Object> offer : flightOffers) {
             int id = (int) offer.get("id");
-            String bookingLink = "http://localhost:3000/flight-details/" + id;
+            String bookingLink = "/flight-details/" + id;
             offer.put("bookingLink", bookingLink);
             formatted.add(offer);
         }

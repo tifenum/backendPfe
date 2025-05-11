@@ -1,6 +1,7 @@
 package com.pfe.hotel.service;
 
 import com.github.javafaker.Faker;
+import lombok.Getter;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -17,12 +18,13 @@ public class HotelFakerService {
         this.random = new Random();
     }
 
+    @Getter
     public static class Hotel {
-        private String name;
-        private String address;
-        private double latitude;
-        private double longitude;
-        private List<Room> rooms;
+        private final String name;
+        private final String address;
+        private final double latitude;
+        private final double longitude;
+        private final List<Room> rooms;
 
         public Hotel(String name, String address, double latitude, double longitude, List<Room> rooms) {
             this.name = name;
@@ -31,12 +33,6 @@ public class HotelFakerService {
             this.longitude = longitude;
             this.rooms = rooms;
         }
-
-        public String getName() { return name; }
-        public String getAddress() { return address; }
-        public double getLatitude() { return latitude; }
-        public double getLongitude() { return longitude; }
-        public List<Room> getRooms() { return rooms; }
 
         @Override
         public String toString() {
@@ -47,20 +43,17 @@ public class HotelFakerService {
         }
     }
 
+    @Getter
     public static class Room {
-        private String type;
-        private double price;
-        private List<String> features;
+        private final String type;
+        private final double price;
+        private final List<String> features;
 
         public Room(String type, double price, List<String> features) {
             this.type = type;
             this.price = price;
             this.features = features;
         }
-
-        public String getType() { return type; }
-        public double getPrice() { return price; }
-        public List<String> getFeatures() { return features; }
 
         @Override
         public String toString() {

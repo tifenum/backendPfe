@@ -2,6 +2,8 @@ package com.pfe.flight.service;
 
 import com.github.javafaker.Faker;
 import org.springframework.stereotype.Service;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Service
@@ -12,34 +14,50 @@ public class FlightFaker {
 
     public List<Map<String, Object>> generateFakeFlightOffers(
             String originLocationCode, String destinationLocationCode,
-            String departureDate, String returnDate, int adults) {
+            String departureDate, String returnDate, String flightType, String airlineCode) {
 
         List<Map<String, Object>> flightOffers = new ArrayList<>();
+        // Default departure date to today + 7 days if not provided
+        String effectiveDepartureDate = departureDate != null && !departureDate.isEmpty()
+                ? departureDate
+                : LocalDate.now().plusDays(7).format(DateTimeFormatter.ISO_LOCAL_DATE);
 
         for (int i = 1; i <= 3; i++) {
-            flightOffers.add(generateFlightOffer(originLocationCode, destinationLocationCode, departureDate, returnDate, i));
+            flightOffers.add(generateFlightOffer(
+                    originLocationCode, destinationLocationCode,
+                    effectiveDepartureDate, returnDate, flightType, i, airlineCode
+            ));
         }
 
         return flightOffers;
     }
 
-
     private Map<String, Object> generateFlightOffer(
             String originLocationCode, String destinationLocationCode,
-            String departureDate, String returnDate, int id) {
+            String departureDate, String returnDate, String flightType, int id, String airlineCode) {
 
         Map<String, Object> flightOffer = new HashMap<>();
         flightOffer.put("id", id);
 
-        flightOffer.put("oneWay", false);
+        boolean isOneWay = "one-way".equalsIgnoreCase(flightType);
+        flightOffer.put("oneWay", isOneWay);
+        flightOffer.put("tripType", isOneWay ? "One Way" : "Round Trip");
+        flightOffer.put("returnDate", isOneWay ? null : returnDate);
+
         List<Map<String, Object>> itineraries = new ArrayList<>();
         itineraries.add(generateItinerary(originLocationCode, destinationLocationCode, departureDate));
-        itineraries.add(generateItinerary(destinationLocationCode, originLocationCode, returnDate));
+        if (!isOneWay) {
+            // Only add return itinerary for round-trip
+            String effectiveReturnDate = returnDate != null && !returnDate.isEmpty()
+                    ? returnDate
+                    : LocalDate.parse(departureDate).plusDays(7).format(DateTimeFormatter.ISO_LOCAL_DATE);
+            itineraries.add(generateItinerary(destinationLocationCode, originLocationCode, effectiveReturnDate));
+        }
         flightOffer.put("itineraries", itineraries);
 
         flightOffer.put("price", String.format("%.2f", faker.number().randomDouble(2, 50, 200)));
-        String airlineCode = getAirlineCode();
-        flightOffer.put("AirlineCodes", airlineCode);
+        String effectiveAirlineCode = airlineCode != null && !airlineCode.isEmpty() ? airlineCode : getAirlineCode();
+        flightOffer.put("AirlineCodes", effectiveAirlineCode);
 
         List<Map<String, Object>> seatMap = generateSeatMap();
         flightOffer.put("seatMap", List.of(seatMap));
@@ -73,44 +91,40 @@ public class FlightFaker {
 
     private List<Map<String, Object>> generateSeatMap() {
         List<Map<String, Object>> seats = new ArrayList<>();
-        String[] rows = {"1", "3", "7", "8", "10", "11", "12", "20", "21", "22","23","24","25","26","27","28","29","30","31","32"};
+        String[] rows = {"1", "3", "7", "8", "10", "11", "12", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32"};
         String[] columns = {"A", "B", "C", "D", "E", "F"};
-        String[] columns1 = {"A", "B","E", "F"};
+        String[] columns1 = {"A", "B", "E", "F"};
         String[] columns2 = {"B", "C", "D", "E"};
         for (String row : rows) {
-            if(row.equals("1") || row.equals("3")) {
+            if (row.equals("1") || row.equals("3")) {
                 for (String column : columns1) {
                     seats.add(Map.of(
                             "id", row + "-" + column,
                             "isReserved", random.nextBoolean(),
-                            "class","Business"
+                            "class", "Business"
                     ));
                 }
-            }
-            else if(row.equals("20")){
+            } else if (row.equals("20")) {
                 for (String column : columns2) {
                     seats.add(Map.of(
                             "id", row + "-" + column,
                             "isReserved", random.nextBoolean(),
-                            "class","Econom-Plus"
-
+                            "class", "Econom-Plus"
                     ));
                 }
-            }
-            else {
+            } else {
                 for (String column : columns) {
-                    if(row.equals("7") || row.equals("8") || row.equals("10") || row.equals("11") || row.equals("12") || row.equals("21")) {
+                    if (row.equals("7") || row.equals("8") || row.equals("10") || row.equals("11") || row.equals("12") || row.equals("21")) {
                         seats.add(Map.of(
                                 "id", row + "-" + column,
                                 "isReserved", random.nextBoolean(),
-                                "class","Econom-Plus"
+                                "class", "Econom-Plus"
                         ));
-                    }
-                    else{
+                    } else {
                         seats.add(Map.of(
                                 "id", row + "-" + column,
                                 "isReserved", random.nextBoolean(),
-                                "class","Economy"
+                                "class", "Economy"
                         ));
                     }
                 }
