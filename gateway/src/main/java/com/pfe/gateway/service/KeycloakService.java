@@ -84,10 +84,11 @@ public class KeycloakService {
                 keycloakAdmin.realm(realm).users().get(userId).roles().realmLevel()
                         .add(Collections.singletonList(clientRole));
 
-                // Explicitly send verification email
+                // Send verification email with custom redirect URI
+                String redirectUri = "http://localhost:3000/signin"; // Replace with your login page URL
                 keycloakAdmin.realm(realm).users().get(userId).executeActionsEmail(
                         clientId, // Client ID (e.g., "spring-boot-client")
-                        null,     // Redirect URI (optional, set to login page if needed)
+                        redirectUri, // Redirect to your login page after verification
                         Collections.singletonList("VERIFY_EMAIL")
                 );
 
@@ -107,7 +108,8 @@ public class KeycloakService {
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Unexpected error during registration: " + e.getMessage()));
         }
-    }    /**
+    }
+    /**
      * Logs in a user by building a Keycloak instance using user credentials and retrieves an access token.
      */
 
