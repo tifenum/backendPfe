@@ -88,6 +88,44 @@ public class KeycloakService {
             }
         }
     }
+    public ResponseEntity<ClientUserDTO> getUserById(String userId) {
+        Keycloak keycloak = null;
+        try {
+            String adminUsername = "admin";
+            String adminPassword = "admin";
+            keycloak = KeycloakBuilder.builder()
+                    .serverUrl(keycloakServerUrl)
+                    .realm("master")
+                    .clientId("admin-cli")
+                    .username(adminUsername)
+                    .password(adminPassword)
+                    .grantType("password")
+                    .build();
+
+            UserRepresentation user = keycloak.realm(realm).users().get(userId).toRepresentation();
+            if (user == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            ClientUserDTO client = new ClientUserDTO(
+                    user.getId(),
+                    user.getUsername(),
+                    user.getEmail()
+            );
+            return ResponseEntity.ok(client);
+        } catch (Exception e) {
+            logger.error("Error fetching user {}: {}", userId, e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        } finally {
+            if (keycloak != null) {
+                try {
+                    keycloak.close();
+                } catch (Exception e) {
+                    logger.warn("Failed to close Keycloak admin client: {}", e.getMessage());
+                }
+            }
+        }
+    }
     public ResponseEntity<Void> deleteUser(String userId) {
         Keycloak keycloak = null;
         try {

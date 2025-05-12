@@ -1,10 +1,13 @@
 package com.pfe.hotel.service;
 
 import com.pfe.hotel.DTO.BookingResponseDTO;
+import com.pfe.hotel.DTO.ClientUserDTO;
 import com.pfe.hotel.dao.BookingDao;
 import com.pfe.hotel.dao.entity.Booking;
 import com.pfe.hotel.DTO.BookingRequest;
+import com.pfe.hotel.feignClient.UserServiceFeignClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,7 +18,11 @@ public class BookingService {
 
     @Autowired
     private BookingDao bookingDao;
+    @Autowired
+    private UserServiceFeignClient userServiceFeignClient;
 
+    @Autowired
+    private EmailService emailService;
     public Booking createBooking(Booking booking) {
         return bookingDao.save(booking);
     }
@@ -62,6 +69,8 @@ public class BookingService {
                 ))
                 .collect(Collectors.toList());
     }
+
+
     public BookingResponseDTO updateReservationStatus(String reservationId, String newStatus) {
         if (!"Accepted".equals(newStatus) && !"Refused".equals(newStatus)) {
             throw new IllegalArgumentException("Invalid status: " + newStatus);
@@ -74,6 +83,19 @@ public class BookingService {
 
         reservation.setReservationStatus(newStatus);
         Booking updatedBooking = bookingDao.save(reservation);
+
+        // Fetch user email using Feign client
+        ResponseEntity<ClientUserDTO> userResponse = userServiceFeignClient.getUserById(reservation.getUserId());
+        if (userResponse.getStatusCode().is2xxSuccessful() && userResponse.getBody() != null) {
+            ClientUserDTO user = userResponse.getBody();
+            // Send email notification
+            emailService.sendBookingStatusEmail(
+                    "boukadidahbib@gmail.com",
+                    updatedBooking.getHotelName(),
+                    newStatus,
+                    reservationId
+            );
+        }
 
         return new BookingResponseDTO(
                 updatedBooking.getId(),

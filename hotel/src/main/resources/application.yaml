@@ -8,7 +8,9 @@ spring:
     active: amadeus
 server:
   port: 8060
-
+user:
+  service:
+    url: http://localhost:8090
 
 
 

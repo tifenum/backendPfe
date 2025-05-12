@@ -37,4 +37,8 @@ public class AuthController {
     public ResponseEntity<Void> deleteUser(@PathVariable String userId) {
         return keycloakService.deleteUser(userId);
     }
+    @GetMapping("/{userId}")
+    public ResponseEntity<ClientUserDTO> getUserById(@PathVariable String userId) {
+        return keycloakService.getUserById(userId);
+    }
 }
