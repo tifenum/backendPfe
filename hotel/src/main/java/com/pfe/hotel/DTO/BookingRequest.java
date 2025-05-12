@@ -12,10 +12,10 @@ public class BookingRequest {
     private String hotelAddress;
     private String roomType;
     private List<String> roomFeatures;
-    private double roomPricePerNight;
+    private int roomPricePerNight;
     private String checkInDate;
     private String checkOutDate;
     private String notes;
-    private double totalPrice;
+    private int totalPrice;
     private String reservationStatus;
 }

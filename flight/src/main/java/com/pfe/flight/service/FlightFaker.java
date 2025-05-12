@@ -55,8 +55,7 @@ public class FlightFaker {
         }
         flightOffer.put("itineraries", itineraries);
 
-        flightOffer.put("price", String.format("%.2f", faker.number().randomDouble(2, 50, 200)));
-        String effectiveAirlineCode = airlineCode != null && !airlineCode.isEmpty() ? airlineCode : getAirlineCode();
+        flightOffer.put("price", String.valueOf((int) faker.number().randomDouble(2, 50, 200)));        String effectiveAirlineCode = airlineCode != null && !airlineCode.isEmpty() ? airlineCode : getAirlineCode();
         flightOffer.put("AirlineCodes", effectiveAirlineCode);
 
         List<Map<String, Object>> seatMap = generateSeatMap();

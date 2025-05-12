@@ -18,17 +18,17 @@ public class Booking {
     private String hotelAddress;
     private String roomType;
     private List<String> roomFeatures;
-    private double roomPricePerNight;
+    private int roomPricePerNight;
     private String checkInDate;
     private String checkOutDate;
     private String notes;
-    private double totalPrice;
+    private int totalPrice;
     private String reservationStatus;
     public Booking() {}
 
     public Booking(String userId, String hotelName, String hotelAddress, String roomType,
-                   List<String> roomFeatures, double roomPricePerNight, String checkInDate,
-                   String checkOutDate, String notes, double totalPrice) {
+                   List<String> roomFeatures, int roomPricePerNight, String checkInDate,
+                   String checkOutDate, String notes, int totalPrice) {
         this.userId = userId;
         this.hotelName = hotelName;
         this.hotelAddress = hotelAddress;

@@ -21,7 +21,7 @@ public class FlightBooking {
         private String tripType; // "One Way" or "Round Trip"
         private String returnDate; // ISO date (e.g., "2025-05-20")
         private List<List<Seat>> seatMap;
-        private String price;
+        private int price;
         private List<Itinerary> itineraries;
         private String airlineCodes;
         private int flightId;

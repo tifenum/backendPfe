@@ -87,15 +87,14 @@ public class ChatbotService {
         List<Map<String, String>> history = sessionHistory.computeIfAbsent(sessionId, k -> new ArrayList<>());
         history.add(Map.of("role", "user", "content", userMessage));
 
-        // Check if user is asking for bookings
-        String lowerMessage = userMessage.toLowerCase();
+        // Check for bookings
         String bookingContext = "";
-        if (lowerMessage.contains("bookings") || lowerMessage.contains("show") || lowerMessage.contains("list")) {
+        if (userMessage.toLowerCase().contains("bookings") || userMessage.toLowerCase().contains("show") || userMessage.toLowerCase().contains("list")) {
             if (userId == null || userId.isEmpty()) {
-                bookingContext = "You must be logged in first in order for me to fetch your bookings.";
+                bookingContext = "You must be logged in first to fetch your bookings.";
             } else {
                 try {
-                    bookingContext = getBookingContext(userId, lowerMessage);
+                    bookingContext = getBookingContext(userId, userMessage.toLowerCase());
                     logger.debug("Booking context for user {}: {}", userId, bookingContext);
                 } catch (Exception e) {
                     logger.error("Error fetching booking context for user {}: {}", userId, e.getMessage(), e);
@@ -107,31 +106,18 @@ public class ChatbotService {
         Map<String, Object> requestBody = new HashMap<>();
         List<Map<String, Object>> contents = new ArrayList<>();
 
-        // Add system prompt with modifiable parts list
+        // Add system prompt
         Map<String, Object> systemContent = new HashMap<>();
         systemContent.put("role", "assistant");
-        List<Map<String, String>> systemParts = new ArrayList<>();
-        systemParts.add(Map.of("text", SYSTEM_PROMPT));
-        systemContent.put("parts", systemParts);
+        systemContent.put("parts", List.of(Map.of("text", SYSTEM_PROMPT)));
         contents.add(systemContent);
 
-        // Add conversation history with modifiable parts list
+        // Add conversation history
         for (Map<String, String> msg : history) {
             Map<String, Object> content = new HashMap<>();
             content.put("role", msg.get("role"));
-            List<Map<String, String>> parts = new ArrayList<>();
-            parts.add(Map.of("text", msg.get("content")));
-            content.put("parts", parts);
+            content.put("parts", List.of(Map.of("text", msg.get("content"))));
             contents.add(content);
-        }
-
-        // Append booking context to the last user message
-        if (!bookingContext.isEmpty()) {
-            Map<String, Object> lastContent = contents.get(contents.size() - 1);
-            List<Map<String, String>> parts = (List<Map<String, String>>) lastContent.get("parts");
-            String originalText = parts.get(0).get("text");
-            parts.set(0, Map.of("text", originalText + "\n" + bookingContext));
-            logger.debug("Appended booking context to last user message: {}", bookingContext);
         }
 
         requestBody.put("contents", contents);
@@ -151,9 +137,9 @@ public class ChatbotService {
                     List<Map<String, String>> responseParts = (List<Map<String, String>>) contentResponse.get("parts");
                     String botResponse = responseParts.get(0).get("text");
 
-                    // Append booking context to bot response if it was a booking query
+                    // Append booking context only if it's a booking query
                     if (!bookingContext.isEmpty()) {
-                        botResponse = botResponse + "\n" + bookingContext;
+                        botResponse = "Let me check your bookings for you!\n" + bookingContext;
                     }
 
                     history.add(Map.of("role", "assistant", "content", botResponse));
@@ -163,15 +149,14 @@ public class ChatbotService {
 
                     Map<String, String> parameters = extractParameters(botResponse);
                     if (parameters != null) {
-                        String flightType = parameters.get("oneWay").equals("true") ? "one-way" : "round-trip"; // Define flightType
+                        String flightType = parameters.get("oneWay").equals("true") ? "one-way" : "round-trip";
                         List<Map<String, Object>> flightOffers = flightServiceClient.getFakeFlightOffers(
                                 parameters.get("origin"),
                                 parameters.get("destination"),
                                 parameters.get("departureDate"),
                                 parameters.get("oneWay").equals("true") ? null : parameters.get("returnDate"),
-                                flightType // Pass flightType
+                                flightType
                         );
-
                         List<Map<String, Object>> formattedOffers = formatFlightOffers(flightOffers);
                         return Map.of("message", botResponse, "flightOffers", formattedOffers);
                     }
@@ -185,7 +170,6 @@ public class ChatbotService {
             return Map.of("message", "Error with Gemini API: " + e.getMessage());
         }
     }
-
     private String getBookingContext(String userId, String lowerMessage) {
         List<Document> hotelDocs = new ArrayList<>();
         List<Document> flightDocs = new ArrayList<>();

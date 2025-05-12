@@ -46,10 +46,10 @@ public class HotelFakerService {
     @Getter
     public static class Room {
         private final String type;
-        private final double price;
+        private final int price;
         private final List<String> features;
 
-        public Room(String type, double price, List<String> features) {
+        public Room(String type, int price, List<String> features) {
             this.type = type;
             this.price = price;
             this.features = features;
@@ -57,8 +57,7 @@ public class HotelFakerService {
 
         @Override
         public String toString() {
-            return "  - Type: " + type + ", Price: $" + String.format("%.2f", price) + ", Features: " + features;
-        }
+            return "  - Type: " + type + ", Price: $" + (int) price + ", Features: " + features;        }
     }
 
     public Hotel generateFakeHotel(String hotelName, String countryName, String stateName, double latitude, double longitude) {
@@ -77,12 +76,12 @@ public class HotelFakerService {
 
         for (int i = 0; i < numRooms; i++) {
             String type = faker.options().option(roomTypes);
-            double price = switch (type) {
-                case "Single" -> faker.number().randomDouble(2, 50, 100);
-                case "Double" -> faker.number().randomDouble(2, 80, 150);
-                case "Suite" -> faker.number().randomDouble(2, 150, 300);
-                case "Deluxe" -> faker.number().randomDouble(2, 200, 400);
-                default -> 100.0;
+            int price = switch (type) {
+                case "Single" -> faker.number().numberBetween(50, 101); // 50 to 100
+                case "Double" -> faker.number().numberBetween(80, 151); // 80 to 150
+                case "Suite" -> faker.number().numberBetween(150, 301); // 150 to 300
+                case "Deluxe" -> faker.number().numberBetween(200, 401); // 200 to 400
+                default -> 100; // Default as an integer
             };
             List<String> features = generateRandomFeatures(featureOptions);
             rooms.add(new Room(type, price, features));

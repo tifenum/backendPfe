@@ -17,7 +17,7 @@ public class FlightBookingRequestDto {
         private String tripType; // "One Way" or "Round Trip"
         private String returnDate; // ISO date (e.g., "2025-05-20")
         private List<List<SeatDTO>> seatMap;
-        private String price;
+        private int price;
         private List<ItineraryDTO> itineraries;
         @JsonProperty("AirlineCodes")
         private String airlineCodes;
