@@ -85,7 +85,7 @@ public class KeycloakService {
                         .add(Collections.singletonList(clientRole));
 
                 // Send verification email with custom redirect URI
-                String redirectUri = "http://localhost:3000/signin"; // Replace with your login page URL
+                String redirectUri = "https://booking.medhabib.me/signin"; // Replace with your login page URL
                 keycloakAdmin.realm(realm).users().get(userId).executeActionsEmail(
                         clientId, // Client ID (e.g., "spring-boot-client")
                         redirectUri, // Redirect to your login page after verification
