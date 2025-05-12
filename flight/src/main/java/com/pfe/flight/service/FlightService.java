@@ -6,11 +6,15 @@ import com.amadeus.exceptions.ResponseException;
 import com.amadeus.resources.FlightOfferSearch;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.pfe.flight.DTO.ClientUserDTO;
 import com.pfe.flight.DTO.FlightBookingRequestDto;
 import com.pfe.flight.DTO.SlimFlightBookingDto;
 import com.pfe.flight.dao.BookingDao;
 import com.pfe.flight.dao.entity.FlightBooking;
+import com.pfe.flight.feignClient.UserServiceFeignClient;
 import com.pfe.flight.mappers.FlightBookingMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -29,7 +33,11 @@ public class FlightService {
     private final BookingDao bookingDao;
     private final FlightBookingMapper flightBookingMapper;
     private final FlightFaker flightFaker;
+    @Autowired
+    private EmailService emailService;
 
+    @Autowired
+    private UserServiceFeignClient userServiceFeignClient;
     public FlightService(Amadeus amadeus, BookingDao bookingDao, FlightBookingMapper flightBookingMapper, FlightFaker flightFaker) {
         this.amadeus = amadeus;
         this.bookingDao = bookingDao;
@@ -50,8 +58,26 @@ public class FlightService {
         }
 
         Optional<FlightBooking> updated = bookingDao.updateBookingStatus(bookingId, newStatus);
-        return updated.map(flightBookingMapper::mapToSlimDto)
-                .orElse(null);
+        if (updated.isPresent()) {
+            FlightBooking booking = updated.get();
+            // Fetch user details
+            try {
+                ResponseEntity<ClientUserDTO> response = userServiceFeignClient.getUserById(booking.getUserId());
+                if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                    ClientUserDTO user = response.getBody();
+                    String flightDetails = String.valueOf(booking.getFlightDetails()); // Adjust based on your FlightBooking entity
+                    emailService.sendBookingStatusEmail("boukadidahbib@gmail.com", flightDetails, newStatus, bookingId);
+                } else {
+                    // Log error but don't fail the update
+                    System.err.println("Failed to fetch user details for userId: " + booking.getUserId());
+                }
+            } catch (Exception e) {
+                // Log Feign or email error but don't fail the update
+                System.err.println("Failed to send email for bookingId: " + bookingId + ", error: " + e.getMessage());
+            }
+            return flightBookingMapper.mapToSlimDto(booking);
+        }
+        return null;
     }
 
     public List<Map<String, Object>> searchFlights(String origin, String destination, String departureDate, String returnDate, String flightType) {

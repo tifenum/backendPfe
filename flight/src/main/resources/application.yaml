@@ -16,6 +16,9 @@ amadeus:
   api:
     key: 8sILHrr9qpoORGbmgczUDTyfVARAAUmI
     secret: GqI0o1v8abouwgAs
+user:
+  service:
+    url: http://localhost:8090
 
 logging:
   level:
