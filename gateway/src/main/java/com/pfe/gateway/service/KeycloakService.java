@@ -51,10 +51,10 @@ public class KeycloakService {
      */
     public Mono<ResponseEntity<String>> registerUser(User user) {
         try {
-            // Build an admin client instance (using credentials from the master realm)
+            // Build an admin client instance
             Keycloak keycloakAdmin = KeycloakBuilder.builder()
                     .serverUrl(keycloakServerUrl)
-                    .realm("master") // we authenticate against the master realm for admin operations
+                    .realm("master")
                     .username(adminUsername)
                     .password(adminPassword)
                     .clientId("admin-cli")
@@ -65,6 +65,9 @@ public class KeycloakService {
             userRep.setUsername(user.getEmail());
             userRep.setEmail(user.getEmail());
             userRep.setEnabled(true);
+            // Enable email verification
+            userRep.setEmailVerified(false); // Ensure email is not marked as verified
+            userRep.setRequiredActions(Collections.singletonList("VERIFY_EMAIL")); // Add email verification action
 
             // Set user credentials
             CredentialRepresentation credential = new CredentialRepresentation();
@@ -81,7 +84,7 @@ public class KeycloakService {
                         .roles().get("client").toRepresentation();
                 keycloakAdmin.realm(realm).users().get(userId).roles().realmLevel()
                         .add(Collections.singletonList(clientRole));
-                return Mono.just(ResponseEntity.ok("User registered successfully"));
+                return Mono.just(ResponseEntity.ok("User registered successfully. Please check your email to verify."));
             } else if (response.getStatus() == 409) {
                 return Mono.just(ResponseEntity
                         .status(HttpStatus.BAD_REQUEST)
@@ -97,7 +100,6 @@ public class KeycloakService {
                     .body("Unexpected error during registration: " + e.getMessage()));
         }
     }
-
     /**
      * Logs in a user by building a Keycloak instance using user credentials and retrieves an access token.
      */
@@ -130,6 +132,7 @@ public class KeycloakService {
             return Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null));
         }
     }
+
     public Mono<ResponseEntity<String>> logoutUser(JwtAuthenticationToken jwtAuth) {
         if (jwtAuth == null) {
             logger.warn("Invalid authentication: JWT token is null");

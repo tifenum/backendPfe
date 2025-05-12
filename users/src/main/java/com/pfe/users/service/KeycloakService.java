@@ -88,6 +88,36 @@ public class KeycloakService {
             }
         }
     }
+    public ResponseEntity<Void> deleteUser(String userId) {
+        Keycloak keycloak = null;
+        try {
+            String adminUsername = "admin";
+            String adminPassword = "admin";
+            keycloak = KeycloakBuilder.builder()
+                    .serverUrl(keycloakServerUrl)
+                    .realm("master")
+                    .clientId("admin-cli")
+                    .username(adminUsername)
+                    .password(adminPassword)
+                    .grantType("password")
+                    .build();
+
+            keycloak.realm(realm).users().get(userId).remove();
+            logger.info("User {} deleted successfully", userId);
+            return ResponseEntity.noContent().build();
+        } catch (Exception e) {
+            logger.error("Error deleting user {}: {}", userId, e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        } finally {
+            if (keycloak != null) {
+                try {
+                    keycloak.close();
+                } catch (Exception e) {
+                    logger.warn("Failed to close Keycloak admin client: {}", e.getMessage());
+                }
+            }
+        }
+    }
     public ResponseEntity<ClientUserDTO> getUserById(String userId) {
         Keycloak keycloak = null;
         try {
@@ -115,36 +145,6 @@ public class KeycloakService {
             return ResponseEntity.ok(client);
         } catch (Exception e) {
             logger.error("Error fetching user {}: {}", userId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        } finally {
-            if (keycloak != null) {
-                try {
-                    keycloak.close();
-                } catch (Exception e) {
-                    logger.warn("Failed to close Keycloak admin client: {}", e.getMessage());
-                }
-            }
-        }
-    }
-    public ResponseEntity<Void> deleteUser(String userId) {
-        Keycloak keycloak = null;
-        try {
-            String adminUsername = "admin";
-            String adminPassword = "admin";
-            keycloak = KeycloakBuilder.builder()
-                    .serverUrl(keycloakServerUrl)
-                    .realm("master")
-                    .clientId("admin-cli")
-                    .username(adminUsername)
-                    .password(adminPassword)
-                    .grantType("password")
-                    .build();
-
-            keycloak.realm(realm).users().get(userId).remove();
-            logger.info("User {} deleted successfully", userId);
-            return ResponseEntity.noContent().build();
-        } catch (Exception e) {
-            logger.error("Error deleting user {}: {}", userId, e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         } finally {
             if (keycloak != null) {
