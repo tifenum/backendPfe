@@ -65,9 +65,8 @@ public class KeycloakService {
             userRep.setUsername(user.getEmail());
             userRep.setEmail(user.getEmail());
             userRep.setEnabled(true);
-            // Enable email verification
-            userRep.setEmailVerified(false); // Ensure email is not marked as verified
-            userRep.setRequiredActions(Collections.singletonList("VERIFY_EMAIL")); // Add email verification action
+            userRep.setEmailVerified(false);
+            userRep.setRequiredActions(Collections.singletonList("VERIFY_EMAIL"));
 
             // Set user credentials
             CredentialRepresentation credential = new CredentialRepresentation();
@@ -84,6 +83,14 @@ public class KeycloakService {
                         .roles().get("client").toRepresentation();
                 keycloakAdmin.realm(realm).users().get(userId).roles().realmLevel()
                         .add(Collections.singletonList(clientRole));
+
+                // Explicitly send verification email
+                keycloakAdmin.realm(realm).users().get(userId).executeActionsEmail(
+                        clientId, // Client ID (e.g., "spring-boot-client")
+                        null,     // Redirect URI (optional, set to login page if needed)
+                        Collections.singletonList("VERIFY_EMAIL")
+                );
+
                 return Mono.just(ResponseEntity.ok("User registered successfully. Please check your email to verify."));
             } else if (response.getStatus() == 409) {
                 return Mono.just(ResponseEntity
@@ -95,12 +102,12 @@ public class KeycloakService {
                         .body("Error during registration: " + response.getStatusInfo().toString()));
             }
         } catch (Exception e) {
+            logger.error("Error during user registration: {}", e.getMessage(), e);
             return Mono.just(ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Unexpected error during registration: " + e.getMessage()));
         }
-    }
-    /**
+    }    /**
      * Logs in a user by building a Keycloak instance using user credentials and retrieves an access token.
      */
 
