@@ -23,7 +23,7 @@ jobs:
             git fetch origin master
             git reset --hard origin/master
 
-            for svc in users flight hotel gateway; do
+            for svc in users flight hotel gateway cars; do
               echo "🔨 Building $svc…"
               cd $svc
               mvn clean package -DskipTests
