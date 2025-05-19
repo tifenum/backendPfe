@@ -35,5 +35,5 @@ jobs:
             sudo systemctl restart flight
             sudo systemctl restart hotel
             sudo systemctl restart gateway
-
+            sudo systemctl restart cars
             echo "✅ Backend redeployed!"

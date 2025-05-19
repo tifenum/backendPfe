@@ -18,6 +18,10 @@ spring:
           uri: http://localhost:8060
           predicates:
             - Path=/api/hotels/**
+        - id: cars
+          uri: http://localhost:8040
+          predicates:
+            - Path=/api/cars/**
   security:
     oauth2:
       resource server:

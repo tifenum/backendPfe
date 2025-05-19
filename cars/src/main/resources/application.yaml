@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: cars
+  data:
+    mongodb:
+      uri: mongodb+srv://hbib:Azerty%409911@cluster0.br7eade.mongodb.net/PFE?retryWrites=true&w=majority
+  profiles:
+    active: amadeus
+server:
+  port: 8040
+user:
+  service:
+    url: http://localhost:8090
+
+
+
+logging:
+  level:
+    org:
+      springframework:
+        web: DEBUG
+        http: DEBUG
+

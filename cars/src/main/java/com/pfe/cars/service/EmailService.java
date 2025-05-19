@@ -1,4 +1,4 @@
-package com.pfe.hotel.service;
+package com.pfe.cars.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
