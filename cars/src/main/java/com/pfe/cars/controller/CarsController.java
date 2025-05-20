@@ -6,6 +6,7 @@ import com.pfe.cars.service.CarBookingService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.pfe.cars.service.CarFakerService;
+import com.pfe.cars.mappers.CarMapper; // New mapper class
 import com.pfe.cars.dao.entity.Booking;
 import java.util.List;
 import java.util.Locale;
@@ -23,17 +24,19 @@ public class CarsController {
     private final AmadeusService amadeusService;
     private final CarFakerService carFakerService;
     private final CarBookingService bookingService;
-    public CarsController(AmadeusService amadeusService, CarFakerService carFakerService, CarBookingService bookingService) {
+    private final CarMapper carMapper;
+    public CarsController(AmadeusService amadeusService,CarMapper carMapper, CarFakerService carFakerService, CarBookingService bookingService) {
         this.amadeusService = amadeusService;
         this.carFakerService = carFakerService;
         this.bookingService = bookingService;
+        this.carMapper = carMapper;
     }
     @GetMapping("/cities")
     public List<Map<String, Object>> searchCities(@RequestParam String countryCode, @RequestParam String keyword, @RequestParam(defaultValue = "10") int max) {
         return amadeusService.searchCities(countryCode, keyword, max);
     }
     @GetMapping("/fake")
-    public ResponseEntity<?> searchCars(
+    public List<Map<String, Object>> searchCars(
             @RequestParam String pickupCountry,
             @RequestParam String pickupCity,
             @RequestParam(required = false) String carType,
@@ -41,15 +44,18 @@ public class CarsController {
             @RequestParam(required = false) String transmission) {
 
         if (pickupCountry == null || pickupCountry.trim().isEmpty()) {
-            return ResponseEntity.badRequest().body("pickupCountry is required");
+            throw new IllegalArgumentException("pickupCountry is required");
         }
         if (pickupCity == null || pickupCity.trim().isEmpty()) {
-            return ResponseEntity.badRequest().body("pickupCity is required");
+            throw new IllegalArgumentException("pickupCity is required");
         }
 
-        CarFakerService.Car car = carFakerService.generateFakeCar(
-                pickupCountry, pickupCity, carType, passengers, transmission);
-        return ResponseEntity.ok(car);
+        // Generate multiple car offers (each with one CarType)
+        List<CarFakerService.Car> cars = carFakerService.generateMultipleFakeCars(
+                pickupCountry, pickupCity, carType, passengers, transmission, 3); // Generate 3 cars
+
+        // Map to List<Map<String, Object>>
+        return carMapper.toMapList(cars);
     }
 
     @PostMapping("/book")

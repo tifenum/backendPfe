@@ -9,7 +9,6 @@ import java.util.List;
 @Getter
 public class BookingRequest {
     private String userId;
-    private String carProvider;
     private String pickupCountry;
     private String pickupCity;
     private String carType;

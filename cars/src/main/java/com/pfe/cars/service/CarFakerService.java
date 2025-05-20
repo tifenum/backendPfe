@@ -5,9 +5,9 @@ import lombok.Getter;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-import java.util.Arrays;
 import java.util.stream.Collectors;
 
 @Service
@@ -22,13 +22,11 @@ public class CarFakerService {
 
     @Getter
     public static class Car {
-        private final String provider;
         private final String pickupCountry;
         private final String pickupCity;
         private final List<CarType> carTypes;
 
-        public Car(String provider, String pickupCountry, String pickupCity, List<CarType> carTypes) {
-            this.provider = provider;
+        public Car(String pickupCountry, String pickupCity, List<CarType> carTypes) {
             this.pickupCountry = pickupCountry;
             this.pickupCity = pickupCity;
             this.carTypes = carTypes;
@@ -36,8 +34,7 @@ public class CarFakerService {
 
         @Override
         public String toString() {
-            return "Car Provider: " + provider +
-                    "\nLocation: " + pickupCity + ", " + pickupCountry +
+            return "\nLocation: " + pickupCity + ", " + pickupCountry +
                     "\nCar Types:\n" + carTypes;
         }
     }
@@ -47,23 +44,40 @@ public class CarFakerService {
         private final String type;
         private final int pricePerDay;
         private final List<String> features;
+        private final String passengers;
 
-        public CarType(String type, int pricePerDay, List<String> features) {
+        public CarType(String type, int pricePerDay, List<String> features, String passengers) {
             this.type = type;
             this.pricePerDay = pricePerDay;
             this.features = features;
+            this.passengers = passengers;
         }
 
         @Override
         public String toString() {
-            return "  - Type: " + type + ", Price: $" + pricePerDay + "/day, Features: " + features;
+            return "  - Type: " + type + ", Price: $" + pricePerDay + "/day, Features: " + features + ", Passengers: " + passengers;
         }
     }
 
+    public List<Car> generateMultipleFakeCars(String pickupCountry, String pickupCity, String carType, String passengers, String transmission, int numCars) {
+        List<Car> cars = new ArrayList<>();
+        List<CarType> carTypes = generateFakeCarTypes(numCars * 2, carType, passengers, transmission);
+
+        for (int i = 0; i < Math.min(numCars, carTypes.size()); i++) {
+            cars.add(new Car(pickupCountry, pickupCity, List.of(carTypes.get(i))));
+        }
+
+        if (cars.size() < numCars) {
+            CarType defaultCarType = generateDefaultCarType(carType, passengers, transmission);
+            cars.add(new Car(pickupCountry, pickupCity, List.of(defaultCarType)));
+        }
+
+        return cars;
+    }
+
     public Car generateFakeCar(String pickupCountry, String pickupCity, String carType, String passengers, String transmission) {
-        String providerName = faker.options().option("Hertz", "Avis", "Enterprise", "Budget");
-        List<CarType> carTypes = generateFakeCarTypes(5, carType, passengers, transmission); // Generate 5, filter down
-        return new Car(providerName, pickupCountry, pickupCity, carTypes);
+        List<CarType> carTypes = generateFakeCarTypes(5, carType, passengers, transmission);
+        return new Car(pickupCountry, pickupCity, carTypes);
     }
 
     private List<CarType> generateFakeCarTypes(int numCarTypes, String filterCarType, String passengers, String transmission) {
@@ -73,67 +87,63 @@ public class CarFakerService {
                 "GPS Navigation", "Automatic Transmission", "Child Seat", "Unlimited Mileage",
                 "Bluetooth", "Air Conditioning", "Hybrid Engine", "Leather Seats"
         };
+        String[] passengerOptions = {"1-2", "3-4", "5+"};
 
         for (int i = 0; i < numCarTypes; i++) {
-            String type = faker.options().option(carTypeOptions);
+            String type = filterCarType != null && !filterCarType.isEmpty() ? filterCarType : faker.options().option(carTypeOptions);
             int pricePerDay = switch (type) {
-                case "Economy" -> faker.number().numberBetween(30, 61); // $30-60/day
-                case "Compact" -> faker.number().numberBetween(40, 81); // $40-80/day
-                case "SUV" -> faker.number().numberBetween(60, 121); // $60-120/day
-                case "Luxury" -> faker.number().numberBetween(100, 201); // $100-200/day
+                case "Economy" -> faker.number().numberBetween(30, 61);
+                case "Compact" -> faker.number().numberBetween(40, 81);
+                case "SUV" -> faker.number().numberBetween(60, 121);
+                case "Luxury" -> faker.number().numberBetween(100, 201);
                 default -> 50;
             };
             List<String> features = generateRandomFeatures(featureOptions, transmission);
-            carTypes.add(new CarType(type, pricePerDay, features));
+            String passengerCount = passengers != null && !passengers.isEmpty() ? passengers : getDefaultPassengersForCarType(type);
+            carTypes.add(new CarType(type, pricePerDay, features, passengerCount));
         }
 
-        // Filter by carType
-        if (filterCarType != null && !filterCarType.trim().isEmpty()) {
-            carTypes = carTypes.stream()
-                    .filter(ct -> ct.getType().equalsIgnoreCase(filterCarType))
-                    .collect(Collectors.toList());
-        }
-
-        // Filter by passengers
         if (passengers != null && !passengers.trim().isEmpty()) {
             carTypes = carTypes.stream()
                     .filter(ct -> isCarTypeSuitableForPassengers(ct.getType(), passengers))
                     .collect(Collectors.toList());
         }
 
-        // Filter by transmission
         if (transmission != null && !transmission.trim().isEmpty() && transmission.equalsIgnoreCase("Automatic")) {
             carTypes = carTypes.stream()
                     .filter(ct -> ct.getFeatures().contains("Automatic Transmission"))
                     .collect(Collectors.toList());
         }
 
-        // Ensure at least one car type if filters are too restrictive
         if (carTypes.isEmpty()) {
-            String type = filterCarType != null && !filterCarType.isEmpty() ? filterCarType : "Economy";
-            int pricePerDay = switch (type) {
-                case "Economy" -> 50;
-                case "Compact" -> 60;
-                case "SUV" -> 80;
-                case "Luxury" -> 120;
-                default -> 50;
-            };
-            List<String> features = new ArrayList<>(Arrays.asList("Air Conditioning", "Bluetooth"));
-            if (transmission != null && transmission.equalsIgnoreCase("Automatic")) {
-                features.add("Automatic Transmission");
-            }
-            carTypes.add(new CarType(type, pricePerDay, features));
+            carTypes.add(generateDefaultCarType(filterCarType, passengers, transmission));
         }
 
         return carTypes;
     }
 
+    private CarType generateDefaultCarType(String filterCarType, String passengers, String transmission) {
+        String type = filterCarType != null && !filterCarType.isEmpty() ? filterCarType : "Economy";
+        int pricePerDay = switch (type) {
+            case "Economy" -> 50;
+            case "Compact" -> 60;
+            case "SUV" -> 80;
+            case "Luxury" -> 120;
+            default -> 50;
+        };
+        List<String> features = new ArrayList<>(Arrays.asList("Air Conditioning", "Bluetooth"));
+        if (transmission != null && transmission.equalsIgnoreCase("Automatic")) {
+            features.add("Automatic Transmission");
+        }
+        String passengerCount = passengers != null && !passengers.isEmpty() ? passengers : getDefaultPassengersForCarType(type);
+        return new CarType(type, pricePerDay, features, passengerCount);
+    }
+
     private List<String> generateRandomFeatures(String[] featureOptions, String transmission) {
-        int numFeatures = random.nextInt(3) + 2; // 2-4 features
+        int numFeatures = random.nextInt(3) + 2;
         List<String> features = new ArrayList<>();
         List<String> availableFeatures = new ArrayList<>(Arrays.asList(featureOptions));
 
-        // Ensure Automatic Transmission if requested
         if (transmission != null && transmission.equalsIgnoreCase("Automatic")) {
             features.add("Automatic Transmission");
             availableFeatures.remove("Automatic Transmission");
@@ -154,6 +164,16 @@ public class CarFakerService {
             case "3-4" -> carType.equals("Compact") || carType.equals("SUV") || carType.equals("Luxury");
             case "5+" -> carType.equals("SUV") || carType.equals("Luxury");
             default -> true;
+        };
+    }
+
+    private String getDefaultPassengersForCarType(String carType) {
+        return switch (carType) {
+            case "Economy" -> "1-2";
+            case "Compact" -> "3-4";
+            case "SUV" -> "5+";
+            case "Luxury" -> "3-4";
+            default -> "1-2";
         };
     }
 }

@@ -10,7 +10,6 @@ import java.util.List;
 public class BookingResponseDTO {
     private String id;
     private String userId;
-    private String carProvider;
     private String pickupCountry;
     private String pickupCity;
     private String carType;
@@ -24,14 +23,13 @@ public class BookingResponseDTO {
     private int totalPrice;
     private String reservationStatus;
 
-    public BookingResponseDTO(String id, String userId, String carProvider, String pickupCountry,
+    public BookingResponseDTO(String id, String userId, String pickupCountry,
                                  String pickupCity, String carType, List<String> carFeatures,
                                  int pricePerDay, String pickupDate, String pickupTime,
                                  String dropoffDate, String dropoffTime, String notes,
                                  int totalPrice, String reservationStatus) {
         this.id = id;
         this.userId = userId;
-        this.carProvider = carProvider;
         this.pickupCountry = pickupCountry;
         this.pickupCity = pickupCity;
         this.carType = carType;

@@ -30,12 +30,11 @@ public class Booking {
 
     public Booking() {}
 
-    public Booking(String userId, String carProvider, String pickupCountry, String pickupCity,
+    public Booking(String userId, String pickupCountry, String pickupCity,
                    String carType, List<String> carFeatures, String pickupDate,
                    String pickupTime, String dropoffDate, String dropoffTime, String notes,int pricePerDay,
                    int totalPrice) {
         this.userId = userId;
-        this.carProvider = carProvider;
         this.pickupCountry = pickupCountry;
         this.pickupCity = pickupCity;
         this.carType = carType;

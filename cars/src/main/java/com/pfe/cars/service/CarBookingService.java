@@ -32,7 +32,6 @@ public class CarBookingService {
     public Booking createBookingFromRequest(BookingRequest bookingRequest) {
         Booking carBooking = new Booking(
                 bookingRequest.getUserId(),
-                bookingRequest.getCarProvider(),
                 bookingRequest.getPickupCountry(),
                 bookingRequest.getPickupCity(),
                 bookingRequest.getCarType(),
@@ -59,7 +58,6 @@ public class CarBookingService {
                 .map(reservation -> new BookingResponseDTO(
                         reservation.getId(),
                         reservation.getUserId(),
-                        reservation.getCarProvider(),
                         reservation.getPickupCountry(),
                         reservation.getPickupCity(),
                         reservation.getCarType(),
@@ -105,7 +103,6 @@ public class CarBookingService {
         return new BookingResponseDTO(
                 updatedBooking.getId(),
                 updatedBooking.getUserId(),
-                updatedBooking.getCarProvider(),
                 updatedBooking.getPickupCountry(),
                 updatedBooking.getPickupCity(),
                 updatedBooking.getCarType(),
@@ -128,7 +125,6 @@ public class CarBookingService {
                 .map(res -> new BookingResponseDTO(
                         res.getId(),
                         res.getUserId(),
-                        res.getCarProvider(),
                         res.getPickupCountry(),
                         res.getPickupCity(),
                         res.getCarType(),

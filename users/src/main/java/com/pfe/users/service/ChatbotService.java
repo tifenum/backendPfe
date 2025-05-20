@@ -1,6 +1,7 @@
 package com.pfe.users.service;
 
 import com.pfe.users.feignClient.FlightServiceClient;
+import com.pfe.users.feignClient.CarsServiceClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -17,6 +18,7 @@ import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -30,26 +32,30 @@ public class ChatbotService {
     private String mongoUri = "mongodb+srv://hbib:Azerty%409911@cluster0.br7eade.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
     private static final String SYSTEM_PROMPT =
-            "You are a travel assistant for a booking platform, helping users book flights or hotels. The current date is May 11, 2025. " +
-                    "When the user requests a flight, gather details one at a time in this order: origin city (string, convert to IATA code), destination city (string, convert to IATA code), trip type (oneWay or roundTrip), departureDate (ISO date string, YYYY-MM-DD), returnDate (ISO date string, YYYY-MM-DD, only if roundTrip, must be after departureDate)" +
+            "You are a travel assistant for a booking platform, helping users book flights, hotels, or cars. The current date is May 20, 2025. " +
+                    "When the user requests a flight, gather details one at a time in this order: origin city (string, convert to IATA code), destination city (string, convert to IATA code), trip type (oneWay or roundTrip), departureDate (ISO date string, YYYY-MM-DD), returnDate (ISO date string, YYYY-MM-DD, only if roundTrip, must be after departureDate). " +
                     "For cities, verify if the provided city has an airport. If it does, confirm the airport name and IATA code (e.g., 'Paris, got it, I’ll use Charles de Gaulle (CDG)'). If the city has multiple airports, choose the main one. If the city has no airport, respond with 'Sorry, [city] doesn’t have an airport. Please provide a nearby city with an airport.' and wait for a new city. " +
                     "Convert city names to IATA codes (e.g., 'New York' to 'JFK', 'London' to 'LHR') using your knowledge. " +
-                    "For dates, accept flexible inputs (e.g., 'next week', '3 February', 'tomorrow') and interpret them relative to May 11, 2025. Convert all dates to 'YYYY-MM-DD' format for the JSON output. If a date is ambiguous, invalid, or in the past, ask for clarification (e.g., 'Could you clarify the date? Please provide a future date like 'next week' or '3 February'.'). Ensure returnDate is after departureDate for roundTrip. " +
-                    "after collecting dates." +
-                    "Once all details are collected, reply with '[FLIGHT_RESULTS]' followed by 'Got all the info, searching for flights now!' and then a single PARAMETERS block in this exact JSON format (no extra keys, correct types):\n" +
+                    "For dates, accept flexible inputs (e.g., 'next week', '3 February', 'tomorrow') and interpret them relative to May 20, 2025. Convert all dates to 'YYYY-MM-DD' format for the JSON output. If a date is ambiguous, invalid, or in the past, ask for clarification (e.g., 'Could you clarify the date? Please provide a future date like 'next week' or '3 February'.'). Ensure returnDate is after departureDate for roundTrip. " +
+                    "Once all flight details are collected, reply with '[FLIGHT_RESULTS]' followed by 'Got all the info, searching for flights now!' and then a single PARAMETERS block in this exact JSON format (no extra keys, correct types):\n" +
                     "[PARAMETERS: {\n" +
                     "  \"origin\": \"<IATA code>\",\n" +
                     "  \"destination\": \"<IATA code>\",\n" +
                     "  \"departureDate\": \"<YYYY-MM-DD>\",\n" +
                     "  \"oneWay\": <true|false>,\n" +
-                    "  \"returnDate\": <\"YYYY-MM-DD\"|null>,\n" +
+                    "  \"returnDate\": <\"YYYY-MM-DD\"|null>\n" +
                     "}]\n" +
                     "Use null for returnDate if oneWay is true. " +
                     "For hotels, only respond if the user explicitly says 'hotel' or 'hotels.' Ask for the city, then suggest three fake hotels with '[HOTEL_RESULTS]' at the start, each on its own line in this format: " +
-                    "'[HOTEL_RESULTS]\n{HOTEL_NAME}: {DESCRIPTION}. [BOOK_NOW:/hotel-details?lat={LAT}&lng={LAN}&hotelName={HOTEL_NAME}'. " +
+                    "'[HOTEL_RESULTS]\n{HOTEL_NAME}: {DESCRIPTION}. [BOOK_NOW:/hotel-details?lat={LAT}&lng={LNG}&hotelName={HOTEL_NAME}]'. " +
                     "Invent {LAT}, {LNG}, and URL-encode {HOTEL_NAME}. " +
+                    "For cars, only respond if the user explicitly says 'car,' 'cars,' 'rent a car,' or 'car rental.' Gather details one at a time in this order: pickupCountry (string), pickupCity (string). Validate that pickupCountry if exist or the spelling is correct. If invalid, respond with 'Sorry, [pickupCountry] is not a valid country name. Please provide a valid country name (e.g., United States, France).' and wait for a new name. For pickupCity, verify it’s a plausible city in the given country. If it seems invalid, ask for clarification (e.g., 'Is [pickupCity] a city in [pickupCountry]? Please confirm or provide another city.'). Once all car details are collected, reply with '[CAR_RESULTS]' followed by 'Got all the info, searching for cars now!' and then a single PARAMETERS block in this exact JSON format (no extra keys, correct types):\n" +
+                    "[PARAMETERS: {\n" +
+                    "  \"pickupCountry\": \"<string>\",\n" +
+                    "  \"pickupCity\": \"<string>\",\n" +
+                    "}]\n" +
                     "Only include BOOK_NOW markers when all required info is provided. " +
-                    "Never ask for info the user already gave. Never switch to hotels unless the user asks for them. " +
+                    "Never ask for info the user already gave. Never switch to flights, hotels, or cars unless the user asks for them. " +
                     "If the user asks to see their bookings, respond with: 'Let me check your bookings for you!' and the system will append the details. " +
                     "Keep all responses short and conversational.";
 
@@ -57,9 +63,13 @@ public class ChatbotService {
     private final Map<String, List<Map<String, String>>> sessionHistory = new HashMap<>();
     private final MongoCollection<Document> hotelCollection;
     private final MongoCollection<Document> flightCollection;
+    private final MongoCollection<Document> carCollection;
 
     @Autowired
     private FlightServiceClient flightServiceClient;
+
+    @Autowired
+    private CarsServiceClient carsServiceClient;
 
     public ChatbotService() {
         try {
@@ -69,8 +79,10 @@ public class ChatbotService {
             logger.info("MongoDB connected successfully");
             this.hotelCollection = database.getCollection("hotelBookings");
             this.flightCollection = database.getCollection("flight_bookings");
+            this.carCollection = database.getCollection("carBookings");
             this.hotelCollection.createIndex(Indexes.ascending("userId"));
             this.flightCollection.createIndex(Indexes.ascending("userId"));
+            this.carCollection.createIndex(Indexes.ascending("userId"));
         } catch (Exception e) {
             logger.error("MongoDB connection failed: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to connect to MongoDB", e);
@@ -149,16 +161,25 @@ public class ChatbotService {
 
                     Map<String, String> parameters = extractParameters(botResponse);
                     if (parameters != null) {
-                        String flightType = parameters.get("oneWay").equals("true") ? "one-way" : "round-trip";
-                        List<Map<String, Object>> flightOffers = flightServiceClient.getFakeFlightOffers(
-                                parameters.get("origin"),
-                                parameters.get("destination"),
-                                parameters.get("departureDate"),
-                                parameters.get("oneWay").equals("true") ? null : parameters.get("returnDate"),
-                                flightType
-                        );
-                        List<Map<String, Object>> formattedOffers = formatFlightOffers(flightOffers);
-                        return Map.of("message", botResponse, "flightOffers", formattedOffers);
+                        if (botResponse.contains("[FLIGHT_RESULTS]")) {
+                            String flightType = parameters.get("oneWay").equals("true") ? "one-way" : "round-trip";
+                            List<Map<String, Object>> flightOffers = flightServiceClient.getFakeFlightOffers(
+                                    parameters.get("origin"),
+                                    parameters.get("destination"),
+                                    parameters.get("departureDate"),
+                                    parameters.get("oneWay").equals("true") ? null : parameters.get("returnDate"),
+                                    flightType
+                            );
+                            List<Map<String, Object>> formattedOffers = formatFlightOffers(flightOffers);
+                            return Map.of("message", botResponse, "flightOffers", formattedOffers);
+                        } else if (botResponse.contains("[CAR_RESULTS]")) {
+                            List<Map<String, Object>> carOffers = carsServiceClient.getFakeCars(
+                                    parameters.get("pickupCountry"),
+                                    parameters.get("pickupCity")
+                            );
+                            List<Map<String, Object>> formattedOffers = formatCarOffers(carOffers);
+                            return Map.of("message", botResponse, "carOffers", formattedOffers);
+                        }
                     }
                     return Map.of("message", botResponse);
                 }
@@ -170,9 +191,11 @@ public class ChatbotService {
             return Map.of("message", "Error with Gemini API: " + e.getMessage());
         }
     }
+
     private String getBookingContext(String userId, String lowerMessage) {
         List<Document> hotelDocs = new ArrayList<>();
         List<Document> flightDocs = new ArrayList<>();
+        List<Document> carDocs = new ArrayList<>();
 
         try {
             // Fetch bookings based on user intent
@@ -182,10 +205,14 @@ public class ChatbotService {
             } else if (lowerMessage.contains("flight")) {
                 flightDocs = flightCollection.find(new Document("userId", userId)).limit(10).into(new ArrayList<>());
                 logger.debug("Fetched {} flight bookings for user {}", flightDocs.size(), userId);
+            } else if (lowerMessage.contains("car") || lowerMessage.contains("rental")) {
+                carDocs = carCollection.find(new Document("userId", userId)).limit(10).into(new ArrayList<>());
+                logger.debug("Fetched {} car bookings for user {}", carDocs.size(), userId);
             } else {
                 hotelDocs = hotelCollection.find(new Document("userId", userId)).limit(10).into(new ArrayList<>());
                 flightDocs = flightCollection.find(new Document("userId", userId)).limit(10).into(new ArrayList<>());
-                logger.debug("Fetched {} hotel and {} flight bookings for user {}", hotelDocs.size(), flightDocs.size(), userId);
+                carDocs = carCollection.find(new Document("userId", userId)).limit(10).into(new ArrayList<>());
+                logger.debug("Fetched {} hotel, {} flight, and {} car bookings for user {}", hotelDocs.size(), flightDocs.size(), carDocs.size(), userId);
             }
 
             StringBuilder context = new StringBuilder();
@@ -195,6 +222,10 @@ public class ChatbotService {
             if (!flightDocs.isEmpty()) {
                 if (context.length() > 0) context.append("\n");
                 context.append(formatFlightBookings(flightDocs));
+            }
+            if (!carDocs.isEmpty()) {
+                if (context.length() > 0) context.append("\n");
+                context.append(formatCarBookings(carDocs));
             }
             if (context.length() == 0) {
                 return "No bookings found!";
@@ -291,6 +322,30 @@ public class ChatbotService {
         return "Your Flight Bookings:\n" + String.join("\n", lines) + "\n";
     }
 
+    private String formatCarBookings(List<Document> docs) {
+        if (docs == null || docs.isEmpty()) {
+            return "No car bookings found!\n";
+        }
+        List<String> lines = new ArrayList<>();
+        for (Document c : docs) {
+            try {
+                logger.debug("Formatting car booking: {}", c.toJson());
+                String carType = c.getString("carType") != null ? c.getString("carType") : "Unknown";
+                String location = c.getString("pickupCity") != null && c.getString("pickupCountry") != null
+                        ? c.getString("pickupCity") + ", " + c.getString("pickupCountry") : "Unknown";
+                String pickupDate = c.getString("pickupDate") != null ? c.getString("pickupDate") : "?";
+                String dropoffDate = c.getString("dropoffDate") != null ? c.getString("dropoffDate") : "?";
+                String status = c.getString("reservationStatus") != null ? c.getString("reservationStatus") : "?";
+                Object price = c.get("totalPrice") != null ? c.get("totalPrice") : "?";
+                lines.add(String.format("- %s | %s | Pickup: %s | Drop-off: %s | Status: %s | $%s", carType, location, pickupDate, dropoffDate, status, price));
+            } catch (Exception e) {
+                logger.error("Error formatting car booking: {}", e.getMessage(), e);
+                lines.add("- Error formatting car booking");
+            }
+        }
+        return "Your Car Bookings:\n" + String.join("\n", lines) + "\n";
+    }
+
     private Map<String, String> extractParameters(String botResponse) {
         int start = botResponse.indexOf("[PARAMETERS:");
         if (start == -1) return null;
@@ -311,7 +366,7 @@ public class ChatbotService {
                 params.put(key, value);
             }
         }
-        if (params.size() == 5) return params;
+        if (params.size() >= 2) return params; // At least 2 for flights or cars
         return null;
     }
 
@@ -322,6 +377,23 @@ public class ChatbotService {
             String bookingLink = "/flight-details/" + id;
             offer.put("bookingLink", bookingLink);
             formatted.add(offer);
+        }
+        return formatted;
+    }
+
+    private List<Map<String, Object>> formatCarOffers(List<Map<String, Object>> carOffers) {
+        List<Map<String, Object>> formatted = new ArrayList<>();
+        for (Map<String, Object> offer : carOffers) {
+            Map<String, Object> formattedOffer = new HashMap<>();
+            formattedOffer.put("pickupCountry", offer.get("pickupCountry")); // Full country name, e.g., "France"
+            formattedOffer.put("pickupCity", offer.get("pickupCity")); // e.g., "Paris"
+            List<Map<String, Object>> carTypes = (List<Map<String, Object>>) offer.get("carTypes");
+            formattedOffer.put("carTypes", carTypes);
+            String bookingLink = "/car-details?pickupCountry=" + URLEncoder.encode((String) offer.get("pickupCountry"), StandardCharsets.UTF_8) +
+                    "&pickupCity=" + URLEncoder.encode((String) offer.get("pickupCity"), StandardCharsets.UTF_8) +
+                    "&carType=" + (carTypes.isEmpty() ? "Economy" : carTypes.get(0).get("type"));
+            formattedOffer.put("bookingLink", bookingLink);
+            formatted.add(formattedOffer);
         }
         return formatted;
     }
