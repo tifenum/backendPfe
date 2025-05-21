@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class ChatbotService {
@@ -37,7 +38,7 @@ public class ChatbotService {
                     "For cities, verify if the provided city has an airport. If it does, confirm the airport name and IATA code (e.g., 'Paris, got it, I’ll use Charles de Gaulle (CDG)'). If the city has multiple airports, choose the main one. If the city has no airport, respond with 'Sorry, [city] doesn’t have an airport. Please provide a nearby city with an airport.' and wait for a new city. " +
                     "Convert city names to IATA codes (e.g., 'New York' to 'JFK', 'London' to 'LHR') using your knowledge. " +
                     "For dates, accept flexible inputs (e.g., 'next week', '3 February', 'tomorrow') and interpret them relative to May 20, 2025. Convert all dates to 'YYYY-MM-DD' format for the JSON output. If a date is ambiguous, invalid, or in the past, ask for clarification (e.g., 'Could you clarify the date? Please provide a future date like 'next week' or '3 February'.'). Ensure returnDate is after departureDate for roundTrip. " +
-                    "Once all flight details are collected, reply with '[FLIGHT_RESULTS]' followed by 'Got all the info, searching for flights now!' and then a single PARAMETERS block in this exact JSON format (no extra keys, correct types):\n" +
+                    "Once all flight details are collected, reply with 'Got all the info, searching for flights now!' followed by a single PARAMETERS block in this exact JSON format (no extra keys, correct types):\n" +
                     "[PARAMETERS: {\n" +
                     "  \"origin\": \"<IATA code>\",\n" +
                     "  \"destination\": \"<IATA code>\",\n" +
@@ -46,15 +47,18 @@ public class ChatbotService {
                     "  \"returnDate\": <\"YYYY-MM-DD\"|null>\n" +
                     "}]\n" +
                     "Use null for returnDate if oneWay is true. " +
-                    "For hotels, only respond if the user explicitly says 'hotel' or 'hotels.' Ask for the city, then suggest three fake hotels with '[HOTEL_RESULTS]' at the start, each on its own line in this format: " +
-                    "'[HOTEL_RESULTS]\n{HOTEL_NAME}: {DESCRIPTION}. [BOOK_NOW:/hotel-details?lat={LAT}&lng={LNG}&hotelName={HOTEL_NAME}]'. " +
-                    "Invent {LAT}, {LNG}, and URL-encode {HOTEL_NAME}. " +
-                    "For cars, only respond if the user explicitly says 'car,' 'cars,' 'rent a car,' or 'car rental.' Gather details one at a time in this order: pickupCountry (string), pickupCity (string). Validate that pickupCountry if exist or the spelling is correct. If invalid, respond with 'Sorry, [pickupCountry] is not a valid country name. Please provide a valid country name (e.g., United States, France).' and wait for a new name. For pickupCity, verify it’s a plausible city in the given country. If it seems invalid, ask for clarification (e.g., 'Is [pickupCity] a city in [pickupCountry]? Please confirm or provide another city.'). Once all car details are collected, reply with '[CAR_RESULTS]' followed by 'Got all the info, searching for cars now!' and then a single PARAMETERS block in this exact JSON format (no extra keys, correct types):\n" +
+                    "For hotels, only respond if the user explicitly says 'hotel' or 'hotels.' Ask for the city, then suggest three fake hotels with a JSON array of three hotel objects in this format:\n" +
+                    "[\n" +
+                    "  {\"hotelName\": \"<string>\", \"description\": \"<string>\", \"lat\": <number>, \"lng\": <number>},\n" +
+                    "  {\"hotelName\": \"<string>\", \"description\": \"<string>\", \"lat\": <number>, \"lng\": <number>},\n" +
+                    "  {\"hotelName\": \"<string>\", \"description\": \"<string>\", \"lat\": <number>, \"lng\": <number>}\n" +
+                    "]\n" +
+                    "Invent realistic lat and lng coordinates for the city (e.g., for Paris, use values around lat: 48.85, lng: 2.35). Ensure hotelName and description are unique and relevant to the city. " +
+                    "For cars, only respond if the user explicitly says 'car,' 'cars,' 'rent a car,' or 'car rental.' Gather details one at a time in this order: pickupCountry (string), pickupCity (string). Validate that pickupCountry if exist or the spelling is correct. If invalid, respond with 'Sorry, [pickupCountry] is not a valid country name. Please provide a valid country name (e.g., United States, France).' and wait for a new name. For pickupCity, verify it’s a plausible city in the given country. If it seems invalid, ask for clarification (e.g., 'Is [pickupCity] a city in [pickupCountry]? Please confirm or provide another city.'). Once all car details are collected, reply with 'Got all the info, searching for cars now!' followed by a single PARAMETERS block in this exact JSON format (no extra keys, correct types):\n" +
                     "[PARAMETERS: {\n" +
                     "  \"pickupCountry\": \"<string>\",\n" +
                     "  \"pickupCity\": \"<string>\",\n" +
                     "}]\n" +
-                    "Only include BOOK_NOW markers when all required info is provided. " +
                     "Never ask for info the user already gave. Never switch to flights, hotels, or cars unless the user asks for them. " +
                     "If the user asks to see their bookings, respond with: 'Let me check your bookings for you!' and the system will append the details. " +
                     "Keep all responses short and conversational.";
@@ -64,6 +68,7 @@ public class ChatbotService {
     private final MongoCollection<Document> hotelCollection;
     private final MongoCollection<Document> flightCollection;
     private final MongoCollection<Document> carCollection;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
     private FlightServiceClient flightServiceClient;
@@ -99,7 +104,6 @@ public class ChatbotService {
         List<Map<String, String>> history = sessionHistory.computeIfAbsent(sessionId, k -> new ArrayList<>());
         history.add(Map.of("role", "user", "content", userMessage));
 
-        // Check for bookings
         String bookingContext = "";
         if (userMessage.toLowerCase().contains("bookings") || userMessage.toLowerCase().contains("show") || userMessage.toLowerCase().contains("list")) {
             if (userId == null || userId.isEmpty()) {
@@ -118,13 +122,11 @@ public class ChatbotService {
         Map<String, Object> requestBody = new HashMap<>();
         List<Map<String, Object>> contents = new ArrayList<>();
 
-        // Add system prompt
         Map<String, Object> systemContent = new HashMap<>();
         systemContent.put("role", "assistant");
         systemContent.put("parts", List.of(Map.of("text", SYSTEM_PROMPT)));
         contents.add(systemContent);
 
-        // Add conversation history
         for (Map<String, String> msg : history) {
             Map<String, Object> content = new HashMap<>();
             content.put("role", msg.get("role"));
@@ -149,7 +151,6 @@ public class ChatbotService {
                     List<Map<String, String>> responseParts = (List<Map<String, String>>) contentResponse.get("parts");
                     String botResponse = responseParts.get(0).get("text");
 
-                    // Append booking context only if it's a booking query
                     if (!bookingContext.isEmpty()) {
                         botResponse = "Let me check your bookings for you!\n" + bookingContext;
                     }
@@ -159,9 +160,27 @@ public class ChatbotService {
                         history.subList(0, history.size() - 20).clear();
                     }
 
+                    // Clean the message by removing all tags and JSON content
+                    String cleanBotMessage = botResponse
+                            .replaceAll("\\[PARAMETERS:[\\s\\S]*?\\]", "") // Remove [PARAMETERS:...]
+                            .replaceAll("\\[\\s*\\{[\\s\\S]*?\\}\\s*\\]", "") // Remove JSON arrays (hotels)
+                            .replaceAll("\\[.*_RESULTS\\]", "") // Remove any lingering [SOMETHING_RESULTS]
+                            .trim();
+                    if (cleanBotMessage.isEmpty()) {
+                        cleanBotMessage = "Here are some great options for you!";
+                    }
+
+                    // Check for hotel offers (JSON array without [HOTEL_RESULTS])
+                    List<Map<String, Object>> hotelOffers = extractHotelOffers(botResponse);
+                    if (!hotelOffers.isEmpty()) {
+                        return Map.of("message", cleanBotMessage, "hotelOffers", formatHotelOffers(hotelOffers));
+                    }
+
+                    // Check for flight or car parameters
                     Map<String, String> parameters = extractParameters(botResponse);
                     if (parameters != null) {
-                        if (botResponse.contains("[FLIGHT_RESULTS]")) {
+                        if (parameters.containsKey("origin") && parameters.containsKey("destination")) {
+                            // Flight request
                             String flightType = parameters.get("oneWay").equals("true") ? "one-way" : "round-trip";
                             List<Map<String, Object>> flightOffers = flightServiceClient.getFakeFlightOffers(
                                     parameters.get("origin"),
@@ -170,18 +189,19 @@ public class ChatbotService {
                                     parameters.get("oneWay").equals("true") ? null : parameters.get("returnDate"),
                                     flightType
                             );
-                            List<Map<String, Object>> formattedOffers = formatFlightOffers(flightOffers);
-                            return Map.of("message", botResponse, "flightOffers", formattedOffers);
-                        } else if (botResponse.contains("[CAR_RESULTS]")) {
+                            return Map.of("message", cleanBotMessage, "flightOffers", formatFlightOffers(flightOffers));
+                        } else if (parameters.containsKey("pickupCountry") && parameters.containsKey("pickupCity")) {
+                            // Car request
                             List<Map<String, Object>> carOffers = carsServiceClient.getFakeCars(
                                     parameters.get("pickupCountry"),
                                     parameters.get("pickupCity")
                             );
-                            List<Map<String, Object>> formattedOffers = formatCarOffers(carOffers);
-                            return Map.of("message", botResponse, "carOffers", formattedOffers);
+                            return Map.of("message", cleanBotMessage, "carOffers", formatCarOffers(carOffers));
                         }
                     }
-                    return Map.of("message", botResponse);
+
+                    // Default response (no offers, just message)
+                    return Map.of("message", cleanBotMessage);
                 }
             }
             logger.warn("No valid response from Gemini API for session {}", sessionId);
@@ -192,13 +212,51 @@ public class ChatbotService {
         }
     }
 
+    private List<Map<String, Object>> extractHotelOffers(String botResponse) {
+        try {
+            // Look for a JSON array (hotels) without relying on [HOTEL_RESULTS]
+            int jsonStart = botResponse.indexOf("[");
+            int jsonEnd = botResponse.lastIndexOf("]");
+            if (jsonStart == -1 || jsonEnd == -1 || jsonEnd <= jsonStart) {
+                return new ArrayList<>();
+            }
+
+            String jsonStr = botResponse.substring(jsonStart, jsonEnd + 1);
+            List<Map<String, Object>> hotelOffers = objectMapper.readValue(jsonStr, List.class);
+            // Verify it's a list of hotel objects
+            if (hotelOffers.stream().allMatch(offer ->
+                    offer.containsKey("hotelName") && offer.containsKey("description") &&
+                            offer.containsKey("lat") && offer.containsKey("lng"))) {
+                return hotelOffers;
+            }
+            return new ArrayList<>();
+        } catch (Exception e) {
+            logger.error("Error parsing hotel offers: {}", e.getMessage(), e);
+            return new ArrayList<>();
+        }
+    }
+
+    private List<Map<String, Object>> formatHotelOffers(List<Map<String, Object>> hotelOffers) {
+        return hotelOffers.stream()
+                .filter(offer -> offer.containsKey("hotelName") && offer.containsKey("description") &&
+                        offer.containsKey("lat") && offer.containsKey("lng"))
+                .map(offer -> {
+                    Map<String, Object> formatted = new HashMap<>();
+                    formatted.put("hotelName", offer.get("hotelName"));
+                    formatted.put("description", offer.get("description"));
+                    formatted.put("lat", offer.get("lat"));
+                    formatted.put("lng", offer.get("lng"));
+                    return formatted;
+                })
+                .toList();
+    }
+
     private String getBookingContext(String userId, String lowerMessage) {
         List<Document> hotelDocs = new ArrayList<>();
         List<Document> flightDocs = new ArrayList<>();
         List<Document> carDocs = new ArrayList<>();
 
         try {
-            // Fetch bookings based on user intent
             if (lowerMessage.contains("hotel")) {
                 hotelDocs = hotelCollection.find(new Document("userId", userId)).limit(10).into(new ArrayList<>());
                 logger.debug("Fetched {} hotel bookings for user {}", hotelDocs.size(), userId);
@@ -366,7 +424,7 @@ public class ChatbotService {
                 params.put(key, value);
             }
         }
-        if (params.size() >= 2) return params; // At least 2 for flights or cars
+        if (params.size() >= 2) return params;
         return null;
     }
 
@@ -385,8 +443,8 @@ public class ChatbotService {
         List<Map<String, Object>> formatted = new ArrayList<>();
         for (Map<String, Object> offer : carOffers) {
             Map<String, Object> formattedOffer = new HashMap<>();
-            formattedOffer.put("pickupCountry", offer.get("pickupCountry")); // Full country name, e.g., "France"
-            formattedOffer.put("pickupCity", offer.get("pickupCity")); // e.g., "Paris"
+            formattedOffer.put("pickupCountry", offer.get("pickupCountry"));
+            formattedOffer.put("pickupCity", offer.get("pickupCity"));
             List<Map<String, Object>> carTypes = (List<Map<String, Object>>) offer.get("carTypes");
             formattedOffer.put("carTypes", carTypes);
             String bookingLink = "/car-details?pickupCountry=" + URLEncoder.encode((String) offer.get("pickupCountry"), StandardCharsets.UTF_8) +
