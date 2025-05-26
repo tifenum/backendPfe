@@ -1,4 +1,4 @@
- package com.pfe.users.service;
+package com.pfe.users.service;
 
 import com.pfe.users.feignClient.FlightServiceClient;
 import com.pfe.users.feignClient.CarsServiceClient;

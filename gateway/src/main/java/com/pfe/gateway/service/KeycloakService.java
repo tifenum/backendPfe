@@ -195,4 +195,47 @@ public class KeycloakService {
             }
         }
     }
+    public Mono<ResponseEntity<String>> resetPassword(String email) {
+        Keycloak keycloakAdmin = null;
+        try {
+            keycloakAdmin = KeycloakBuilder.builder()
+                    .serverUrl(keycloakServerUrl)
+                    .realm("master")
+                    .username(adminUsername)
+                    .password(adminPassword)
+                    .clientId("admin-cli")
+                    .grantType(OAuth2Constants.PASSWORD)
+                    .build();
+
+            UsersResource usersResource = keycloakAdmin.realm(realm).users();
+            List<UserRepresentation> users = usersResource.search(email, true);
+            if (users.isEmpty()) {
+                logger.warn("No user found with email: {} in realm: {}", email, realm);
+                return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("No user found with the provided email."));
+            }
+
+            String userId = users.get(0).getId();
+            String redirectUri = "https://booking.medhabib.me/signin";
+            keycloakAdmin.realm(realm).users().get(userId).executeActionsEmail(
+                    clientId,
+                    redirectUri,
+                    Collections.singletonList("UPDATE_PASSWORD")
+            );
+
+            return Mono.just(ResponseEntity.ok("Password reset email sent successfully. Please check your email."));
+        } catch (Exception e) {
+            logger.error("Error during password reset for email {}: {}", email, e.getMessage(), e);
+            return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error during password reset: " + e.getMessage()));
+        } finally {
+            if (keycloakAdmin != null) {
+                try {
+                    keycloakAdmin.close();
+                } catch (Exception e) {
+                    logger.warn("Failed to close Keycloak admin client: {}", e.getMessage());
+                }
+            }
+        }
+    }
 }
