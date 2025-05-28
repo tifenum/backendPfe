@@ -27,3 +27,6 @@ logging:
       springframework:
         security: DEBUG
         web: DEBUG
+
+mapillary:
+  access-token: "MLY|9776335315776862|eab7ce300d7a94bc52a0e3bd54a246f7"

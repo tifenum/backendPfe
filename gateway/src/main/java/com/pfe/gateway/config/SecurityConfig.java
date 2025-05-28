@@ -17,7 +17,7 @@ public class SecurityConfig {
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .pathMatchers("/api/auth/login" ,"/api/auth/signup" ,"/api/auth/reset-password","/api/flights/faker","/api/flights/fake","/api/hotels/cities","/api/hotels/search","/api/hotels/by-geocode","/api/hotels/by-keyword", "/api/users/ask", "/api/cars/fake").permitAll()
+                        .pathMatchers("/api/auth/login" ,"/api/auth/signup" ,"/api/auth/reset-password","/api/users/map/images","/api/users/map/**","/api/flights/faker","/api/flights/fake","/api/hotels/cities","/api/hotels/search","/api/hotels/by-geocode","/api/hotels/by-keyword", "/api/users/ask", "/api/cars/fake").permitAll()
                         .anyExchange().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2

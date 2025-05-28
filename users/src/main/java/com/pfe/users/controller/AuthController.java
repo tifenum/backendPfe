@@ -1,8 +1,10 @@
 package com.pfe.users.controller;
 
 import com.pfe.users.DTO.ClientUserDTO;
+import com.pfe.users.DTO.MapillaryImageDTO;
 import com.pfe.users.service.ChatbotService;
 import com.pfe.users.service.KeycloakService;
+import com.pfe.users.service.MapService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,11 +17,11 @@ public class AuthController {
 
     private final KeycloakService keycloakService;
     private final ChatbotService chatbotService;
-
-    public AuthController(KeycloakService keycloakService, ChatbotService chatbotService) {
+    private final MapService mapService;
+    public AuthController(KeycloakService keycloakService, ChatbotService chatbotService, MapService mapService) {
         this.keycloakService = keycloakService;
         this.chatbotService = chatbotService;
-
+        this.mapService = mapService;
     }
     @GetMapping("/clients")
     public ResponseEntity<List<ClientUserDTO>> getAllClients() {
@@ -40,5 +42,26 @@ public class AuthController {
     @GetMapping("/{userId}")
     public ResponseEntity<ClientUserDTO> getUserById(@PathVariable String userId) {
         return keycloakService.getUserById(userId);
+    }
+    @GetMapping("/map/images")
+    public ResponseEntity<List<MapillaryImageDTO>> getMapillaryImages(
+            @RequestParam String bbox,
+            @RequestParam(defaultValue = "2") int limit
+    ) {
+        try {
+            List<MapillaryImageDTO> images = mapService.fetchImages(bbox, limit);
+            return ResponseEntity.ok(images);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(500).body(null);
+        }
+    }
+    @GetMapping("/map/image/{imageId}")
+    public ResponseEntity<MapillaryImageDTO> getMapillaryImageDetails(@PathVariable String imageId) {
+        try {
+            MapillaryImageDTO image = mapService.fetchImageDetails(imageId);
+            return ResponseEntity.ok(image);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(500).body(null);
+        }
     }
 }
