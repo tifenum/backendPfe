@@ -8,6 +8,7 @@ import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -36,7 +37,8 @@ public class KeycloakService {
 
     @Value("${keycloak.admin-token}")
     private String adminToken;
-
+    @Autowired
+    private NewsletterEmailService emailService;
 
     public ResponseEntity<List<ClientUserDTO>> getAllClients() {
         Keycloak keycloak = null;
@@ -154,6 +156,32 @@ public class KeycloakService {
                     logger.warn("Failed to close Keycloak admin client: {}", e.getMessage());
                 }
             }
+        }
+    }
+    public ResponseEntity<String> subscribeToNewsletter(String name, String email) {
+        try {
+            if (email == null || email.isEmpty() || !email.contains("@")) {
+                return ResponseEntity.badRequest().body("Invalid email address");
+            }
+
+            emailService.sendNewsletterSubscriptionEmail(email, name);
+            logger.info("Newsletter subscription processed for email: {}", email);
+
+            return ResponseEntity.ok("Successfully subscribed to newsletter");
+        } catch (Exception e) {
+            logger.error("Failed to subscribe to newsletter for email {}: {}", email, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to subscribe: " + e.getMessage());
+        }
+    }
+    public ResponseEntity<String> submitContactRequest(String name, String email, String message) {
+        try {
+            emailService.sendContactConfirmationEmail(email, name);
+            logger.info("Contact request processed for email: {}", email);
+            // TODO: Store message or notify support team (e.g., save to database or send to support email)
+            return ResponseEntity.ok("Contact request submitted successfully");
+        } catch (Exception e) {
+            logger.error("Failed to process contact request for email {}: {}", email, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to submit contact request: " + e.getMessage());
         }
     }
 }

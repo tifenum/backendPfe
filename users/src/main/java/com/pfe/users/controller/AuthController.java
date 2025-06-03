@@ -1,10 +1,12 @@
 package com.pfe.users.controller;
 
 import com.pfe.users.DTO.ClientUserDTO;
+import com.pfe.users.DTO.ContactRequestDTO;
 import com.pfe.users.DTO.MapillaryImageDTO;
 import com.pfe.users.service.ChatbotService;
 import com.pfe.users.service.KeycloakService;
 import com.pfe.users.service.MapService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -63,5 +65,20 @@ public class AuthController {
         } catch (RuntimeException e) {
             return ResponseEntity.status(500).body(null);
         }
+    }
+
+    @PostMapping("/newsletter/subscribe")
+    public ResponseEntity<String> subscribeToNewsletter(
+            @RequestBody Map<String, String> request
+    ) {
+        String name = request.get("name");
+        String email = request.get("email");
+        return keycloakService.subscribeToNewsletter(name, email);
+    }
+    @PostMapping("/contact/submit")
+    public ResponseEntity<String> submitContactRequest(
+            @Valid @RequestBody ContactRequestDTO request
+    ) {
+        return keycloakService.submitContactRequest(request.getName(), request.getEmail(), request.getMessage());
     }
 }

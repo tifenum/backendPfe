@@ -1,0 +1,19 @@
+amadeus:
+  api:
+    key: "8sILHrr9qpoORGbmgczUDTyfVARAAUmI"
+    secret: "GqI0o1v8abouwgAs"
+spring:
+  mail:
+    host: smtp.sendgrid.net
+    port: 587
+    username: apikey
+    password: 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
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+        debug: true
+

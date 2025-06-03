@@ -1,7 +1,8 @@
 spring:
   application:
     name: users
-
+  profiles:
+    active: amadeus
 
 server:
   port: 8090

@@ -103,7 +103,6 @@
 			<artifactId>jackson-annotations</artifactId>
 		</dependency>
 
-		<!-- Jakarta Mail -->
 		<dependency>
 			<groupId>jakarta.mail</groupId>
 			<artifactId>jakarta.mail-api</artifactId>
