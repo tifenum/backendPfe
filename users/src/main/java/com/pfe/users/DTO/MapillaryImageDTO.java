@@ -11,4 +11,5 @@ public class MapillaryImageDTO {
     private double[] coordinates;
     private String thumbUrl;
     private String thumbUrlHighRes; // Optional for thumb_2048_url
+    private String sequenceKey; // Added sequence key
 }
