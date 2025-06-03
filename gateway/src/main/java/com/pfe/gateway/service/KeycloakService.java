@@ -132,7 +132,9 @@ public class KeycloakService {
             AccessTokenResponse tokenResponse = keycloak.tokenManager().getAccessToken();
             TokenResponse token = new TokenResponse();
             token.setAccess_token(tokenResponse.getToken());
-            token.setRefresh_token(tokenResponse.getRefreshToken());
+            // Removed refresh_token
+            token.setExpires_in((int) tokenResponse.getExpiresIn());
+            token.setToken_type(tokenResponse.getTokenType());
 
             logger.debug("Received token for user={}: accessToken expires in {} seconds", username, tokenResponse.getExpiresIn());
             return Mono.just(ResponseEntity.ok(token));

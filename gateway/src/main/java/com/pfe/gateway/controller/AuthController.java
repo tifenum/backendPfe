@@ -1,7 +1,7 @@
 package com.pfe.gateway.controller;
 
-
 import com.pfe.gateway.DTO.ResetPasswordRequest;
+import com.pfe.gateway.DTO.TokenRefreshRequest;
 import com.pfe.gateway.DTO.TokenResponse;
 import com.pfe.gateway.service.KeycloakService;
 import com.pfe.gateway.user.User;
@@ -39,6 +39,7 @@ public class AuthController {
                 .map(SecurityContext::getAuthentication)
                 .flatMap(auth -> keycloakService.logoutUser((JwtAuthenticationToken) auth));
     }
+
     @PostMapping("/reset-password")
     public Mono<ResponseEntity<String>> resetPassword(@RequestBody ResetPasswordRequest request) {
         return keycloakService.resetPassword(request.getEmail());
