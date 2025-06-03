@@ -34,7 +34,7 @@ public class FlightService {
     private final FlightBookingMapper flightBookingMapper;
     private final FlightFaker flightFaker;
     @Autowired
-    private EmailService emailService;
+    private FlightEmailService flightEmailService;
 
     @Autowired
     private UserServiceFeignClient userServiceFeignClient;
@@ -65,8 +65,14 @@ public class FlightService {
                 ResponseEntity<ClientUserDTO> response = userServiceFeignClient.getUserById(booking.getUserId());
                 if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                     ClientUserDTO user = response.getBody();
-                    String flightDetails = String.valueOf(booking.getFlightDetails()); // Adjust based on your FlightBooking entity
-                    emailService.sendBookingStatusEmail("boukadidahbib@gmail.com", flightDetails, newStatus, bookingId);
+                    SlimFlightBookingDto slimDto = flightBookingMapper.mapToSlimDto(booking);
+                    flightEmailService.sendFlightBookingStatusEmail(
+                            user.getEmail(),
+                            slimDto.getDepartureAirport(),
+                            slimDto.getArrivalAirport(),
+                            newStatus,
+                            bookingId
+                    );
                 } else {
                     // Log error but don't fail the update
                     System.err.println("Failed to fetch user details for userId: " + booking.getUserId());
@@ -79,6 +85,7 @@ public class FlightService {
         }
         return null;
     }
+
 
     public List<Map<String, Object>> searchFlights(String origin, String destination, String departureDate, String returnDate, String flightType) {
         // Default departureDate to today + 7 days if not provided
