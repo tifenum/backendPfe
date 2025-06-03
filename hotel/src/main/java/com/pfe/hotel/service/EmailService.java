@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 
 @Service
 public class EmailService {
@@ -15,12 +17,18 @@ public class EmailService {
     private JavaMailSender mailSender;
 
     public String cleanHotelName(String rawHotelName) {
-        // Replace %20 with space
-        String withSpaces = rawHotelName.replace("%20", " ");
-        // Lowercase everything then capitalize each word
-        String[] words = withSpaces.toLowerCase().split(" ");
+        if (rawHotelName == null || rawHotelName.isEmpty()) {
+            return "";
+        }
+        // Decode URL-encoded string, remove query parameters, and clean up
+        String decodedName = URLDecoder.decode(rawHotelName, StandardCharsets.UTF_8)
+                .replaceAll("\\?login=success", "") // Remove ?login=success
+                .replaceAll("%20", " ") // Replace %20 with space
+                .toLowerCase()
+                .trim();
+        // Capitalize each word
+        String[] words = decodedName.split("\\s+");
         StringBuilder finalName = new StringBuilder();
-
         for (String word : words) {
             if (!word.isEmpty()) {
                 finalName.append(Character.toUpperCase(word.charAt(0)))
