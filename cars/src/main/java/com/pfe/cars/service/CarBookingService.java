@@ -92,7 +92,7 @@ public class CarBookingService {
         if (userResponse.getStatusCode().is2xxSuccessful() && userResponse.getBody() != null) {
             ClientUserDTO user = userResponse.getBody();
             // Send email notification
-            emailService.sendBookingStatusEmail(
+            emailService.sendCarBookingStatusEmail(
                     "boukadidahbib@gmail.com", // Replace with user.getEmail() in production
                     updatedBooking.getCarProvider(),
                     newStatus,
