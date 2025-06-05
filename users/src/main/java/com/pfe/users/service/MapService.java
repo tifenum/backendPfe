@@ -29,7 +29,7 @@ public class MapService {
     public List<MapillaryImageDTO> fetchImages(String bbox, int limit) {
         String url = String.format(
                 "https://graph.mapillary.com/images?access_token=%s&bbox=%s&fields=id,computed_geometry,thumb_256_url,is_pano,sequence_id&limit=%d",
-                mapillaryAccessToken, bbox, limit
+                mapillaryAccessToken, bbox, Math.min(limit, 100) // Cap limit to avoid API abuse
         );
 
         try {
@@ -42,7 +42,7 @@ public class MapService {
                 MapillaryImageDTO image = new MapillaryImageDTO();
                 image.setId(item.path("id").asText());
                 image.setThumbUrl(item.path("thumb_256_url").asText(""));
-                image.setSequenceKey(item.path("sequence_id").asText("")); // Added sequence key
+                image.setSequenceKey(item.path("sequence_id").asText(""));
                 JsonNode geometry = item.path("computed_geometry").path("coordinates");
                 if (geometry.isArray() && geometry.size() == 2) {
                     image.setCoordinates(new double[]{geometry.get(0).asDouble(), geometry.get(1).asDouble()});
@@ -66,7 +66,6 @@ public class MapService {
             throw new RuntimeException("Error processing Mapillary response: " + e.getMessage());
         }
     }
-
     public MapillaryImageDTO fetchImageDetails(String imageId) {
         String url = String.format(
                 "https://graph.mapillary.com/images?access_token=%s&image_ids=%s&fields=id,computed_geometry,thumb_1024_url,thumb_2048_url,sequence_id",
