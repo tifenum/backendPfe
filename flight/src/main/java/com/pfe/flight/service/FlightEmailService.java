@@ -63,7 +63,7 @@ public class FlightEmailService {
                             "                    <!-- Header -->" +
                             "                    <tr>" +
                             "                        <td style=\"background: linear-gradient(135deg, #add8e6, #87ceeb); padding: 20px; text-align: center;\">" +
-                            "                            <img src=\"https://booking.medhabib.me/img/favicon.png\" alt=\"Booking Platform Logo\" style=\"max-width: 100px; height: auto; display: block; margin: 0 auto;\">" +
+                            "                            <img src=\"https://booking.medhabib.me/images/favicon.png\" alt=\"Booking Platform Logo\" style=\"max-width: 100px; height: auto; display: block; margin: 0 auto;\">" +
                             "                        </td>" +
                             "                    </tr>" +
                             "                    <!-- Content -->" +
