@@ -44,7 +44,7 @@ public class KeycloakService {
 
     private final String adminUsername="admin";
 
-    private final String adminPassword= "admin";
+    private final String adminPassword= "123456789";
 
     /**
      * Registers a new user in Keycloak using the Admin client.
