@@ -33,9 +33,10 @@ public class AuthController {
     public Map<String, Object> askAssistant(
             @RequestParam String message,
             @RequestParam String sessionId,
-            @RequestParam(required = false) String userId // Dynamic userId parameter
+            @RequestParam(required = false) String userId,
+            @RequestParam(defaultValue = "0") int characterId // New parameter for historical character
     ) {
-        return chatbotService.askAssistant(message, sessionId, userId);
+        return chatbotService.askAssistant(message, sessionId, userId, characterId);
     }
     @DeleteMapping("/{userId}")
     public ResponseEntity<Void> deleteUser(@PathVariable String userId) {

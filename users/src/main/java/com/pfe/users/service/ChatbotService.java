@@ -39,9 +39,33 @@ public class ChatbotService {
 
     private String mongoUri = "mongodb+srv://hbib:Azerty%409911@cluster0.br7eade.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
-    private static final String SYSTEM_PROMPT =
+    // Map of historical characters: ID -> {name, introduction}
+    private static final Map<Integer, Map<String, String>> HISTORICAL_CHARACTERS = Map.of(
+            0, Map.of(
+                    "name", "Default Assistant",
+                    "introduction", ""
+            ),
+            1, Map.of(
+                    "name", "Hannibal Barca",
+                    "introduction", "You are Hannibal Barca, the Carthaginian general who led armies and elephants across the Alps to challenge Rome in the Punic Wars. Fully embody my strategic, bold, and commanding persona, assisting users with travel plans in 2025. If the user's input explicitly contains the word 'rome' (case-insensitive) and does not include 'city', 'capital', or 'italy' (case-insensitive), express intense offense and hatred for Rome in varied, creative ways (e.g., scorn its name or curse its legacy), then ask a single question to clarify if the user means Rome the city or the Roman Empire (e.g., 'Do you mean that cursed city in Italy or its fallen empire?'). If the input includes 'city', 'capital', or 'italy' alongside 'rome', or if the user confirms Rome the city after clarification, assume Rome the city (capital of Italy), express hatred, and proceed with the request without re-asking for the city. If the input contains 'italy' or 'italian' without 'rome', express hatred for Rome's legacy in a varied way but proceed with the request using the mentioned city or country. If the user mentions 'car', 'cars', 'rent a car', or 'car rental', make a unique remark about my era’s transportation (e.g., referencing elephants, chariots, or marches) without repeating the same phrasing, then assist. If the user mentions 'hotel' or 'hotels', note the absence of hotels in my time with a varied comment (e.g., mentioning camps, local hosts, or rugged conditions) without reusing the same words, then provide three fake hotels in the requested city in JSON format as per the base prompt. For all other requests, provide strategic, concise travel advice without offense, maintaining my Carthaginian pride and military precision. Keep responses short, conversational, and avoid repeating the same phrases across interactions."
+            ),
+            2, Map.of(
+                    "name", "Cleopatra",
+                    "introduction", "You are Cleopatra, Queen of the Nile, ruler of ancient Egypt, famed for my seductive charm and political cunning. Fully embody my regal, persuasive, and elegant persona, assisting users with travel plans in 2025. If the user mentions 'car', 'cars', 'rent a car', or 'car rental', reference my era’s transport (e.g., 'Cars? I sailed the Nile on gilded barges or rode camel caravans. Let me arrange your modern chariot.') before assisting. If the user mentions 'hotel' or 'hotels', note my era’s lodging (e.g., 'Hotels? I rested in opulent palaces or sacred temples. I’ll find you a fitting abode.') before assisting. Infuse responses with references to my alliances with Rome or Greece, and maintain an elegant tone. For all other requests, provide diplomatic, concise travel advice, evoking my empire-building journeys. Keep responses short and conversational."
+            ),
+            3, Map.of(
+                    "name", "Marco Polo",
+                    "introduction", "You are Marco Polo, Venetian explorer of the Silk Road, who ventured across Asia in an age of wonder. Fully embody my adventurous, curious, and storytelling persona, assisting users with travel plans in 2025. If the user mentions 'car', 'cars', 'rent a car', or 'car rental', reference my era’s transport (e.g., 'Cars? I traversed deserts on camel caravans and galloped on horseback. I’ll secure your modern mount.') before assisting. If the user mentions 'hotel' or 'hotels', note my era’s lodging (e.g., 'Hotels? I rested in bustling caravanserais along the Silk Road. Let me find you a worthy stopover.') before assisting. Share brief tales of my journeys, comparing the user’s destination to places I visited (e.g., Venice, Samarkand). For all other requests, provide inspiring, concise travel advice with a sense of discovery. Keep responses short and conversational."
+            ),
+            4, Map.of(
+                    "name", "Ibn Battuta",
+                    "introduction", "You are Ibn Battuta, the Moroccan scholar and traveler of the 14th century, whose journeys across Africa, Asia, and Europe spanned decades, guided by faith and curiosity. Fully embody my devout, scholarly, and adventurous persona, assisting users with travel plans in 2025. If the user mentions 'car', 'cars', 'rent a car', or 'car rental', reference my era’s transport (e.g., 'Cars? I roamed deserts on camel caravans and sailed on dhows. May Allah guide your modern journey!') before assisting. If the user mentions 'hotel' or 'hotels', note my era’s lodging (e.g., 'Hotels? I found rest in mosques, madrasas, or the homes of generous scholars. I’ll seek a blessed lodging for you.') before assisting. Invoke blessings (e.g., 'May your path be blessed') and reference pilgrimage routes or Islamic cities (e.g., Mecca, Cairo) when relevant. For all other requests, provide wise, concise travel advice, drawing on my vast explorations. Keep responses short and conversational."
+            )
+    );
+
+    private static final String BASE_SYSTEM_PROMPT =
             "You are a travel assistant for a booking platform, helping users book flights, hotels, or cars. The current date is June 9, 2025. " +
-                    "When the user requests a flight, gather details one at a time in this order: origin city (string, convert to IATA code), destination city (string, convert to IATA code), trip type (oneWay or roundTrip), departureDate (ISO date string, YYYY-MM-DD), returnDate (ISO date string, YYYY-MM-DD, only if roundTrip, must be after departureDate). dont tell the user that the dates needs to be in that format its only a note for you" +
+                    "When the user requests a flight, gather details one at a time in this order: origin city (string, convert to IATA code), destination city (string, convert to IATA code), trip type (oneWay or roundTrip), departureDate (ISO date string, YYYY-MM-DD), returnDate (ISO date string, YYYY-MM-DD, only if roundTrip, must be after departureDate). Dont tell the user that the dates needs to be in that format its only a note for you" +
                     "For cities, verify if the provided city has an airport. If it does, confirm the airport name and IATA code (e.g., 'Paris, got it, I’ll use Charles de Gaulle (CDG)'). If the city has multiple airports, choose the main one. If the city has no airport, respond with 'Sorry, [city] doesn’t have an airport. Please provide a nearby city with an airport.' and wait for a new city. " +
                     "Convert city names to IATA codes (e.g., 'New York' to 'JFK', 'London' to 'LHR') using your knowledge. " +
                     "For dates, accept flexible inputs (e.g., 'next week', '3 February', 'tomorrow') and interpret them relative to May 21, 2025. Convert all dates to 'YYYY-MM-DD' format for the JSON output. If a date is ambiguous, invalid, or in the past, ask for clarification (e.g., 'Could you clarify the date? Please provide a future date like 'next week' or '3 February'.'). Ensure returnDate is after departureDate for roundTrip. " +
@@ -102,10 +126,16 @@ public class ChatbotService {
         }
     }
 
-    public Map<String, Object> askAssistant(String userMessage, String sessionId, String userId) {
+    public Map<String, Object> askAssistant(String userMessage, String sessionId, String userId, int characterId) {
         String lowerMessage = userMessage.toLowerCase();
         List<Map<String, String>> history = sessionHistory.computeIfAbsent(sessionId, k -> new ArrayList<>());
         history.add(Map.of("role", "user", "content", userMessage));
+
+        // Get the character introduction based on characterId
+        Map<String, String> character = HISTORICAL_CHARACTERS.getOrDefault(characterId, HISTORICAL_CHARACTERS.get(0));
+        String systemPrompt = character.get("introduction").isEmpty()
+                ? BASE_SYSTEM_PROMPT
+                : character.get("introduction") + " " + BASE_SYSTEM_PROMPT;
 
         // Handle booking requests
         if (lowerMessage.contains("bookings") || lowerMessage.contains("fetch") ||
@@ -167,13 +197,12 @@ public class ChatbotService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("x-goog-api-key", apiKey);
-
         Map<String, Object> requestBody = new HashMap<>();
         List<Map<String, Object>> contents = new ArrayList<>();
 
         Map<String, Object> systemContent = new HashMap<>();
         systemContent.put("role", "assistant");
-        systemContent.put("parts", List.of(Map.of("text", SYSTEM_PROMPT)));
+        systemContent.put("parts", List.of(Map.of("text", systemPrompt)));
         contents.add(systemContent);
 
         for (Map<String, String> msg : history) {
@@ -186,7 +215,7 @@ public class ChatbotService {
         requestBody.put("contents", contents);
 
         try {
-            logger.debug("Sending request to Gemini API for session {}", sessionId);
+            logger.debug("Sending request to Gemini API for session {} with character {}", sessionId, character.get("name"));
             ResponseEntity<Map> response = restTemplate.exchange(
                     url, HttpMethod.POST, new HttpEntity<>(requestBody, headers), Map.class
             );
@@ -253,10 +282,11 @@ public class ChatbotService {
         }
     }
 
+    // Remaining methods (pruneSessionHistory, getBookingContext, etc.) remain unchanged
     private void pruneSessionHistory(List<Map<String, String>> history, String customId) {
         List<Map<String, String>> newHistory = new ArrayList<>();
         for (Map<String, String> msg : history) {
-            if (msg.get("role").equals("assistant") && msg.get("content").equals(SYSTEM_PROMPT)) {
+            if (msg.get("role").equals("assistant") && msg.get("content").equals(BASE_SYSTEM_PROMPT)) {
                 newHistory.add(msg);
             } else if (msg.get("role").equals("user") && msg.get("content").toLowerCase().contains(customId.toLowerCase())) {
                 newHistory.add(msg);
@@ -281,7 +311,6 @@ public class ChatbotService {
         String iataFilter = null;
         List<String> bookingTypes = new ArrayList<>();
 
-        // Status filter
         if (lowerMessage.contains("accepted")) {
             statusFilter = "Accepted";
         } else if (lowerMessage.contains("refused")) {
@@ -290,7 +319,6 @@ public class ChatbotService {
             statusFilter = "Pending";
         }
 
-        // Price filter
         Pattern pricePattern = Pattern.compile("(under|cheaper than|less than)\\s+(\\d+)\\s*(dollar|dollars)?");
         Matcher priceMatcher = pricePattern.matcher(lowerMessage);
         if (priceMatcher.find()) {
@@ -301,7 +329,6 @@ public class ChatbotService {
             }
         }
 
-        // Date filter
         Pattern datePattern = Pattern.compile("(after|before)\\s+([\\d-]{10}|next month|tomorrow|next week)");
         Matcher dateMatcher = datePattern.matcher(lowerMessage);
         if (dateMatcher.find()) {
@@ -330,12 +357,10 @@ public class ChatbotService {
             }
         }
 
-        // Location filter (city, country, or IATA code)
         Pattern locationPattern = Pattern.compile("\\b(in|at|from|to)\\s+([a-zA-Z\\s]+|[A-Z]{3})\\b");
         Matcher locationMatcher = locationPattern.matcher(lowerMessage);
         if (locationMatcher.find()) {
             String location = locationMatcher.group(2).trim();
-            // Check if it's a 3-letter IATA code
             if (location.matches("[A-Z]{3}")) {
                 iataFilter = location;
                 logger.debug("Detected IATA code filter: {}", iataFilter);
@@ -345,12 +370,10 @@ public class ChatbotService {
             }
         }
 
-        // Detect booking types
         boolean fetchHotels = lowerMessage.contains("hotel") || lowerMessage.contains("hotels");
         boolean fetchFlights = lowerMessage.contains("flight") || lowerMessage.contains("flights");
         boolean fetchCars = lowerMessage.contains("car") || lowerMessage.contains("cars") || lowerMessage.contains("rental") || lowerMessage.contains("rentals");
 
-        // Check for combinations using "and" or ","
         Pattern comboPattern = Pattern.compile("\\b(hotels?|flights?|cars?|rentals?)\\s*(and|,)\\s*(hotels?|flights?|cars?|rentals?)\\b");
         Matcher comboMatcher = comboPattern.matcher(lowerMessage);
         if (comboMatcher.find()) {
@@ -362,17 +385,14 @@ public class ChatbotService {
             if (type2.matches("hotels?")) bookingTypes.add("hotel");
             else if (type2.matches("flights?")) bookingTypes.add("flight");
             else if (type2.matches("cars?|rentals?")) bookingTypes.add("car");
-            // Remove duplicates
             bookingTypes = bookingTypes.stream().distinct().toList();
             logger.debug("Detected booking type combination: {}", bookingTypes);
         } else if (fetchHotels || fetchFlights || fetchCars) {
-            // Single type or implicit combination
             if (fetchHotels) bookingTypes.add("hotel");
             if (fetchFlights) bookingTypes.add("flight");
             if (fetchCars) bookingTypes.add("car");
             bookingTypes = bookingTypes.stream().distinct().toList();
         } else {
-            // Default to all types if no specific type or combination is mentioned
             bookingTypes = List.of("hotel", "flight", "car");
         }
 
@@ -380,19 +400,16 @@ public class ChatbotService {
             Document baseQuery = new Document("userId", userId);
             Document flightQuery = new Document("userId", userId);
 
-            // Apply status filter
             if (statusFilter != null) {
                 baseQuery.append("reservationStatus", statusFilter);
                 flightQuery.append("bookingStatus", statusFilter);
             }
 
-            // Apply price filter
             if (maxPrice != null) {
                 baseQuery.append("totalPrice", new Document("$lt", maxPrice));
                 flightQuery.append("flightDetails.price", new Document("$lt", maxPrice));
             }
 
-            // Apply date filter
             if (dateFilterValue != null) {
                 String mongoOperator = dateFilterType.equals("after") ? "$gt" : "$lt";
                 if (bookingTypes.contains("hotel") && !bookingTypes.contains("flight") && !bookingTypes.contains("car")) {
@@ -416,7 +433,6 @@ public class ChatbotService {
                 }
             }
 
-            // Apply location filter
             if (locationFilter != null) {
                 baseQuery.append("$or", Arrays.asList(
                         new Document("hotelAddress", new Document("$regex", locationFilter).append("$options", "i")),
@@ -431,9 +447,8 @@ public class ChatbotService {
                 ));
             }
 
-            // Fetch bookings based on requested types
             if (bookingTypes.contains("hotel")) {
-                hotelDocs = hotelCollection.find(baseQuery).limit(10).into(new ArrayList<>());
+                hotelDocs = hotelCollection.find(baseQuery).limit(30).into(new ArrayList<>());
                 logger.debug("Fetched {} hotel bookings for user {} with status {}, price < {}, date {} {}, location {}",
                         hotelDocs.size(), userId, statusFilter != null ? statusFilter : "all",
                         maxPrice != null ? maxPrice : "none",
@@ -441,7 +456,7 @@ public class ChatbotService {
                         locationFilter != null ? locationFilter : "none");
             }
             if (bookingTypes.contains("flight")) {
-                flightDocs = flightCollection.find(flightQuery).limit(10).into(new ArrayList<>());
+                flightDocs = flightCollection.find(flightQuery).limit(30).into(new ArrayList<>());
                 logger.debug("Fetched {} flight bookings for user {} with status {}, price < {}, date {} {}, iata {}",
                         flightDocs.size(), userId, statusFilter != null ? statusFilter : "all",
                         maxPrice != null ? maxPrice : "none",
@@ -449,7 +464,7 @@ public class ChatbotService {
                         iataFilter != null ? iataFilter : "none");
             }
             if (bookingTypes.contains("car")) {
-                carDocs = carCollection.find(baseQuery).limit(10).into(new ArrayList<>());
+                carDocs = carCollection.find(baseQuery).limit(30).into(new ArrayList<>());
                 logger.debug("Fetched {} car bookings for user {} with status {}, price < {}, date {} {}, location {}",
                         carDocs.size(), userId, statusFilter != null ? statusFilter : "all",
                         maxPrice != null ? maxPrice : "none",
@@ -458,7 +473,6 @@ public class ChatbotService {
             }
 
             StringBuilder context = new StringBuilder();
-            // Generate context header based on booking types
             String typeHeader = bookingTypes.size() == 1 ? bookingTypes.get(0).substring(0, 1).toUpperCase() + bookingTypes.get(0).substring(1) :
                     bookingTypes.size() == 2 ? String.join(" and ", bookingTypes.stream()
                             .map(type -> type.substring(0, 1).toUpperCase() + type.substring(1))
@@ -512,7 +526,7 @@ public class ChatbotService {
                 return Map.of("context", "Invalid custom ID format. Use H1, F1, C1, etc.");
             }
 
-            List<Document> docs = collection.find(new Document("userId", userId)).limit(10).into(new ArrayList<>());
+            List<Document> docs = collection.find(new Document("userId", userId)).limit(30).into(new ArrayList<>());
             if (index < 0 || index >= docs.size()) {
                 return Map.of("context", String.format("No %s booking found with ID %s.", type, customId));
             }
@@ -786,7 +800,6 @@ public class ChatbotService {
 
     private List<Map<String, Object>> extractHotelOffers(String botResponse) {
         try {
-            // Look for a JSON array that doesn’t contain PARAMETERS
             int jsonStart = botResponse.indexOf("[");
             int jsonEnd = botResponse.lastIndexOf("]");
             if (jsonStart == -1 || jsonEnd == -1 || jsonEnd <= jsonStart || botResponse.contains("[PARAMETERS:")) {
@@ -795,7 +808,6 @@ public class ChatbotService {
 
             String jsonStr = botResponse.substring(jsonStart, jsonEnd + 1);
             List<Map<String, Object>> hotelOffers = objectMapper.readValue(jsonStr, List.class);
-            // Verify each object has the required hotel fields
             if (hotelOffers.stream().allMatch(offer ->
                     offer.containsKey("hotelName") && offer.get("hotelName") instanceof String &&
                             offer.containsKey("description") && offer.get("description") instanceof String &&
