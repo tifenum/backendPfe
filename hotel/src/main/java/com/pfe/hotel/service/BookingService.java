@@ -90,7 +90,7 @@ public class BookingService {
             ClientUserDTO user = userResponse.getBody();
             // Send email notification
             emailService.sendBookingStatusEmail(
-                    "boukadidahbib@gmail.com",
+                    user.getEmail(),
                     updatedBooking.getHotelName(),
                     newStatus,
                     reservationId

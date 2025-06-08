@@ -93,7 +93,7 @@ public class CarBookingService {
             ClientUserDTO user = userResponse.getBody();
             // Send email notification
             emailService.sendCarBookingStatusEmail(
-                    "boukadidahbib@gmail.com", // Replace with user.getEmail() in production
+                    user.getEmail(), // Replace with user.getEmail() in production
                     updatedBooking.getCarProvider(),
                     newStatus,
                     reservationId

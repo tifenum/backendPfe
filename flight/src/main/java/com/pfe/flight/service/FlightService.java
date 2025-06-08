@@ -67,7 +67,7 @@ public class FlightService {
                     ClientUserDTO user = response.getBody();
                     SlimFlightBookingDto slimDto = flightBookingMapper.mapToSlimDto(booking);
                     flightEmailService.sendFlightBookingStatusEmail(
-                            "boukadidahbib@gmail.com",
+                            user.getEmail(),
                             slimDto.getDepartureAirport(),
                             slimDto.getArrivalAirport(),
                             newStatus,
