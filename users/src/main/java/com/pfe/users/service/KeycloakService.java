@@ -44,7 +44,7 @@ public class KeycloakService {
         Keycloak keycloak = null;
         try {
             String adminUsername = "admin";
-            String adminPassword = "admin";
+            String adminPassword = "123456789";
             keycloak = KeycloakBuilder.builder()
                     .serverUrl(keycloakServerUrl)
                     .realm("master")
